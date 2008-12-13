@@ -1,6 +1,5 @@
 *~
 .deps/*
-COPYING
 INSTALL
 Makefile
 Makefile.in
@@ -14,4 +13,4 @@ hdapsd.o
 install-sh
 missing
 stamp-h1
-
+*.tar.gz
