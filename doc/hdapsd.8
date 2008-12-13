@@ -1,0 +1,40 @@
+.TH HDAPSD "8" "August 2007" "hdapsd 20070803" "User Commands"
+.SH NAME
+hdapsd \- park the drive in case of an emergency
+.SH SYNOPSIS
+.B hdapsd
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.SS "Required options:"
+.TP
+\fB\-d\fR \fB\-\-device=\fR<device>
+<device> is likely to be hda or sda.
+.TP
+\fB\-s\fR \fB\-\-sensitivity=\fR<sensitivity>
+A suggested starting <sensitivity> is 15.
+.SS "Additional options:"
+.TP
+\fB\-a\fR \fB\-\-adaptive\fR
+Adaptive threshold (automatic
+increase when the built\-in
+keyboard/mouse are used).
+.TP
+\fB\-v\fR \fB\-\-verbose\fR
+Get verbose statistics.
+.TP
+\fB\-b\fR \fB\-\-background\fR
+Run the process in the background.
+.TP
+\fB\-p\fR \fB\-\-pidfile[=\fR<pidfile>]
+Create a pid file when running
+in background.
+If <pidfile> is not specified,
+it's set to /var/run/hdapsd.pid.
+.TP
+\fB\-t\fR \fB\-\-dry\-run\fR
+Don't actually park the drive.
+.TP
+\fB\-y\fR \fB\-\-poll\-sysfs\fR
+Force use of sysfs interface to accelerometer.
+.PP
+You can send SIGUSR1 to deactivate hdapsd for 8 seconds.
