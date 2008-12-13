@@ -1,0 +1,17 @@
+*~
+.deps/*
+COPYING
+INSTALL
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.*
+configure
+depcomp
+hdapsd
+hdapsd.o
+install-sh
+missing
+stamp-h1
+
