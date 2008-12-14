@@ -87,7 +87,8 @@ char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
 
 struct list {
-	char name[3];
+	char name[BUF_LEN];
+	char protect_file[BUF_LEN];
 	struct list *next;
 };
 
@@ -468,6 +469,13 @@ int analyze(int x, int y, double unow, double base_threshold,
  * add_disk (disk) - add the given disk to the global disklist
  */
 void add_disk (char* disk) {
+	struct utsname sysinfo;
+	static char protect_file[BUF_LEN] = "";
+	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
+		snprintf(protect_file, BUF_LEN, "/sys/block/%s/device/unload_heads", disk);
+	else
+		snprintf(protect_file, BUF_LEN, "/sys/block/%s/queue/protect", disk);
+	
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
 		if (disklist == NULL) {
@@ -475,7 +483,8 @@ void add_disk (char* disk) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(disklist->name,disk,3);
+			strncpy(disklist->name,disk,BUF_LEN);
+			strncpy(disklist->protect_file,protect_file,BUF_LEN);
 			disklist->next = NULL;
 		}
 	}
@@ -489,24 +498,11 @@ void add_disk (char* disk) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(p->next->name,disk,3);
+			strncpy(p->next->name,disk,BUF_LEN);
+			strncpy(p->next->protect_file,protect_file,BUF_LEN);
 			p->next->next = NULL;
 		}
 	}
-}
-
-/*
- * get_protect_file (disk) - check which interface should be used,
- *                           and return the right path for the given disk
- */
-char *get_protect_file (char* disk) {
-	struct utsname sysinfo;
-	static char protect_file[BUF_LEN] = "";
-	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
-		snprintf(protect_file, BUF_LEN, "/sys/block/%s/device/unload_heads", disk);
-	else
-		snprintf(protect_file, BUF_LEN, "/sys/block/%s/queue/protect", disk);
-	return protect_file;
 }
 
 /*
@@ -648,14 +644,14 @@ int main (int argc, char** argv)
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	struct list *p = disklist;
 	while (p != NULL) {
-		fd = open (get_protect_file(p->name), O_RDWR);
+		fd = open (p->protect_file, O_RDWR);
 		if (background)
 			for (i=0; fd < 0 && i < 100; ++i) {
 				usleep (100000);	/* 10 Hz */
-				fd = open (get_protect_file(p->name), O_RDWR);
+				fd = open (p->protect_file, O_RDWR);
 			}
 		if (fd < 0) {
-			printf ("Could not open %s\n", get_protect_file(p->name));
+			printf ("Could not open %s\n", p->protect_file);
 			free_disk(disklist);
 			return 1;
 		}
@@ -721,7 +717,7 @@ int main (int argc, char** argv)
 				/* Not frozen or freeze about to expire */
 				struct list *p = disklist;
 				while (p != NULL) {
-					write_protect(get_protect_file(p->name),
+					write_protect(p->protect_file,
 					      (FREEZE_SECONDS+FREEZE_EXTRA_SECONDS) * protect_factor);
 					p = p->next;
 				}
@@ -740,12 +736,12 @@ int main (int argc, char** argv)
 				/* Sanity check */
 				struct list *p = disklist;
 				while (p != NULL) {
-					if (!dry_run && !read_int(get_protect_file(p->name)))
+					if (!dry_run && !read_int(p->protect_file))
 						printf("\nError! Not parked when we "
 						       "thought we were... (paged out "
 					               "and timer expired?)\n");
 					/* Freeze has expired */
-					write_protect(get_protect_file(p->name), 0); /* unprotect */
+					write_protect(p->protect_file, 0); /* unprotect */
 					p = p->next;
 				}
 				parked = 0;
