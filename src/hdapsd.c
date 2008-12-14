@@ -470,7 +470,7 @@ int analyze(int x, int y, double unow, double base_threshold,
  */
 void add_disk (char* disk) {
 	struct utsname sysinfo;
-	static char protect_file[BUF_LEN] = "";
+	char protect_file[BUF_LEN] = "";
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
 		snprintf(protect_file, BUF_LEN, "/sys/block/%s/device/unload_heads", disk);
 	else
