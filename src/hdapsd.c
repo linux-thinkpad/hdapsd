@@ -86,6 +86,12 @@ static int sampling_rate;
 char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
 
+struct list {
+	char name[3];
+	struct list *next;
+};
+
+struct list *disklist = NULL;
 
 /*
  * slurp_file - read the content of a file (up to BUF_LEN-1) into a string.
@@ -459,6 +465,62 @@ int analyze(int x, int y, double unow, double base_threshold,
 }
 
 /*
+ * add_disk (disk) - add the given disk to the global disklist
+ */
+void add_disk (char* disk) {
+	if (disklist == NULL) {
+		disklist = (struct list *)malloc(sizeof(struct list));
+		if (disklist == NULL) {
+			printf("Error allocating memory\n");
+			exit(EXIT_FAILURE);
+		}
+		else {
+			strncpy(disklist->name,disk,3);
+			disklist->next = NULL;
+		}
+	}
+	else {
+		struct list *p = disklist;
+		while (p->next != NULL)
+			p = p->next;
+		p->next = (struct list *)malloc(sizeof(struct list));
+		if (p->next == NULL) {
+			printf("Error allocating memory\n");
+			exit(EXIT_FAILURE);
+		}
+		else {
+			strncpy(p->next->name,disk,3);
+			p->next->next = NULL;
+		}
+	}
+}
+
+/*
+ * get_protect_file (disk) - check which interface should be used,
+ *                           and return the right path for the given disk
+ */
+char *get_protect_file (char* disk) {
+	struct utsname sysinfo;
+	static char protect_file[BUF_LEN] = "";
+	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
+		snprintf(protect_file, BUF_LEN, "/sys/block/%s/device/unload_heads", disk);
+	else
+		snprintf(protect_file, BUF_LEN, "/sys/block/%s/queue/protect", disk);
+	return protect_file;
+}
+
+/*
+ * free_disk (disk) - free the allocated memory
+ */
+void free_disk (struct list *disk) {
+	if (disk != NULL) {
+		if (disk->next != NULL)
+			free_disk(disk->next);
+		free(disk);
+	}
+}
+
+/*
  * main() - loop forever, reading the hdaps values and 
  *          parking/unparking as necessary
  */
@@ -469,7 +531,6 @@ int main (int argc, char** argv)
 	int x=0, y=0;
 	int fd, i, ret, threshold = 0, background = 0, adaptive=0,
 	  pidfile = 0, parked = 0;
-	char protect_file[BUF_LEN] = "";
 	double unow = 0, parked_utime = 0;
 	time_t now;
 
@@ -478,32 +539,23 @@ int main (int argc, char** argv)
 	else
 		protect_factor = 1;
 
-	for (;;) {
+	struct option longopts[] =
+	{
+		{"device", required_argument, NULL, 'd'},
+		{"sensitivity", required_argument, NULL, 's'},
+		{"adaptive", no_argument, NULL, 'a'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"background", no_argument, NULL, 'b'},
+		{"pidfile", optional_argument, NULL, 'p'},
+		{"dry-run", no_argument, NULL, 't'},
+		{"poll-sysfs", no_argument, NULL, 'y'},
+		{NULL, 0, NULL, 0}
+	};
 
-		struct option longopts[] =
-		{
-			{"device", required_argument, NULL, 'd'},
-			{"sensitivity", required_argument, NULL, 's'},
-			{"adaptive", no_argument, NULL, 'a'},
-			{"verbose", no_argument, NULL, 'v'},
-			{"background", no_argument, NULL, 'b'},
-			{"pidfile", optional_argument, NULL, 'p'},
-			{"dry-run", no_argument, NULL, 't'},
-			{"poll-sysfs", no_argument, NULL, 'y'},
-			{NULL, 0, NULL, 0}
-		};
-
-		c = getopt_long(argc, argv, "d:s:vbap::ty", longopts, NULL);
-		if (c < 0)
-			break;
+	while ((c = getopt_long(argc, argv, "d:s:vbap::ty", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
-				if (protect_factor != 1)
-					snprintf(protect_file, BUF_LEN,
-						 "/sys/block/%s/device/unload_heads", optarg);
-				else
-					snprintf(protect_file, BUF_LEN,
-						 "/sys/block/%s/queue/protect", optarg);
+				add_disk(optarg);
 				break;
 			case 's':
 				threshold = atoi(optarg);
@@ -537,8 +589,8 @@ int main (int argc, char** argv)
 				break;
 		}
 	}
-
-	if (!threshold || !strlen(protect_file))
+	
+	if (!threshold || disklist == NULL)
 		usage(argv);
 
 	if (!poll_sysfs) {
@@ -583,25 +635,34 @@ int main (int argc, char** argv)
 	mlockall(MCL_FUTURE);
 
 	if (verbose) {
-		printf("protect_file: %s\n", protect_file);
+		struct list *p = disklist;
+		while (p != NULL) {
+			printf("disk: %s\n", p->name);
+			p = p->next;
+		}
 		printf("threshold: %i\n", threshold);
 		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
 	}
 
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	fd = open (protect_file, O_RDWR);
-	if (background)
-		for (i=0; fd < 0 && i < 100; ++i) {
-			usleep (100000);	/* 10 Hz */
-			fd = open (protect_file, O_RDWR);
+	struct list *p = disklist;
+	while (p != NULL) {
+		fd = open (get_protect_file(p->name), O_RDWR);
+		if (background)
+			for (i=0; fd < 0 && i < 100; ++i) {
+				usleep (100000);	/* 10 Hz */
+				fd = open (get_protect_file(p->name), O_RDWR);
+			}
+		if (fd < 0) {
+			printf ("Could not open %s\n", get_protect_file(p->name));
+			free_disk(disklist);
+			return 1;
 		}
-	if (fd < 0) {
-		perror ("open(protect_file)");
-		return 1;
+		close (fd);
+		p = p->next;
 	}
-	close (fd);
-
+	
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	ret = read_position_from_sysfs (&x, &y);
@@ -658,8 +719,12 @@ int main (int argc, char** argv)
 		if (park_now && !pause_now) {
 			if (!parked || unow>parked_utime+REFREEZE_SECONDS) {
 				/* Not frozen or freeze about to expire */
-				write_protect(protect_file,
+				struct list *p = disklist;
+				while (p != NULL) {
+					write_protect(get_protect_file(p->name),
 					      (FREEZE_SECONDS+FREEZE_EXTRA_SECONDS) * protect_factor);
+					p = p->next;
+				}
 				/* Write protect before any output (xterm, or 
 				 * whatever else is handling our stdout, may be 
 				 * swapped out).
@@ -673,12 +738,16 @@ int main (int argc, char** argv)
 			if (parked &&
 			    (pause_now || unow>parked_utime+FREEZE_SECONDS)) {
 				/* Sanity check */
-				if (!dry_run && !read_int(protect_file))
-					printf("\nError! Not parked when we "
-					       "thought we were... (paged out "
-				               "and timer expired?)\n");
-				/* Freeze has expired */
-				write_protect(protect_file, 0); /* unprotect */
+				struct list *p = disklist;
+				while (p != NULL) {
+					if (!dry_run && !read_int(get_protect_file(p->name)))
+						printf("\nError! Not parked when we "
+						       "thought we were... (paged out "
+					               "and timer expired?)\n");
+					/* Freeze has expired */
+					write_protect(get_protect_file(p->name), 0); /* unprotect */
+					p = p->next;
+				}
 				parked = 0;
 				printf("%.24s: un-parking\n", ctime(&now));
 			}
@@ -692,6 +761,7 @@ int main (int argc, char** argv)
 
 	}
 
+	free_disk(disklist);
 	munlockall();
 	return ret;
 }
