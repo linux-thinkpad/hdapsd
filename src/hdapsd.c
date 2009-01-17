@@ -287,6 +287,7 @@ void usage()
 	printf("\n");
 	printf("Required options:\n");
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
+	printf("                                     Can be given multiple times to protect multiple devices.\n");
 	printf("   -s --sensitivity=<sensitivity>    A suggested starting <sensitivity> is 15.\n");
 	printf("Additional options:\n");
 	printf("   -a --adaptive                     Adaptive threshold (automatic\n");
