@@ -1,0 +1,37 @@
+2009-01-17  Evgeni Golov <sargentd@die-welt.net>
+
+  * README: add something that can be called README
+
+  * src/hdapsd.c: Add myself and Elias to copyright holders
+
+  * configure.ac: create config.h in src/, not in root
+
+  * AUTHORS: add myself to AUTHORS :)
+
+  * doc/hdapsd.8, src/hdapsd.c: Update documentation for multidisk usage (and
+  other small fixes to the manpage)
+
+2008-12-14  Evgeni Golov <sargentd@die-welt.net>
+
+  * src/hdapsd.c: protect_file does not need to be static
+
+  * src/hdapsd.c: Only check which interface we should use when we add a disk,
+  not on every access to it
+
+  * src/hdapsd.c: first attempt to add multi-disk support
+
+  * doc/hdapsd.8: Small manpage fix
+
+2008-12-13  Evgeni Golov <sargentd@die-welt.net>
+
+  * .gitignore: Update .gitignore
+
+  * AUTHORS, COPYING: add proper AUTHORS and COPYING files
+
+  * Makefile.am: Add doc and misc to EXTRA_DIST
+
+  * Makefile.am, misc/hdapsd.rules: Add udev rules
+
+  * Makefile.am, doc/hdapsd.8: Add manpage from the Debian package
+
+  * .gitignore: Add .gitignore
