@@ -5,7 +5,7 @@ AC_PREREQ(2.61)
 AC_INIT(hdapsd, 20081004, hdaps-devel@lists.sourceforge.net)
 AM_INIT_AUTOMAKE(hdapsd, 20081004)
 AC_CONFIG_SRCDIR([src/hdapsd.c])
-AM_CONFIG_HEADER([config.h])
+AM_CONFIG_HEADER([src/config.h])
 AC_CONFIG_FILES([Makefile])
 
 # Checks for programs.
