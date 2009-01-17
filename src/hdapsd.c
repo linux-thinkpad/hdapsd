@@ -4,9 +4,11 @@
  *
  *            Derived from pivot.c by Robert Love.
  *
- * Copyright (C) 2005-2007 Jon Escombe <lists@dresco.co.uk>
+ * Copyright (C) 2005-2009 Jon Escombe <lists@dresco.co.uk>
  *                         Robert Love <rml@novell.com>
  *                         Shem Multinymous <multinymous@gmail.com>
+ *                         Elias Oltmanns <eo@nebensachen.de>
+ *                         Evgeni Golov <sargentd@die-welt.net>
  *
  * "Why does that kid keep dropping his laptop?"
  *
