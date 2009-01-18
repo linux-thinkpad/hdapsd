@@ -42,6 +42,7 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <linux/input.h>
+#include <syslog.h>
 
 #define PID_FILE                "/var/run/hdapsd.pid"
 #define SYSFS_POSITION_FILE	    "/sys/devices/platform/hdaps/position"
@@ -535,6 +536,23 @@ void free_disk (struct list *disk) {
 }
 
 /*
+ * printlog (msg) - either print the message to stdout
+ *                  or post it to the syslog
+ */
+
+void printlog (char *msg, int background)
+{
+	time_t now;
+
+	if (background)
+		syslog(LOG_INFO, msg);
+	else {
+		now = time((time_t *)NULL);
+		printf("%.24s: %s\n", ctime(&now), msg);
+	}
+}
+
+/*
  * main() - loop forever, reading the hdaps values and 
  *          parking/unparking as necessary
  */
@@ -616,13 +634,14 @@ int main (int argc, char** argv)
 	if (!poll_sysfs) {
 		hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
 		if (hdaps_input_fd<0) {
-			fprintf(stderr,
-			        "WARNING: Cannot open hdaps position input file %s (%s). "
-			        "You may be using an incompatible version of the hdaps module, "
-			        "or missing the required udev rule. "
-			        "Falling back to reading the position from sysfs (uses more power). "
-			        "Use '-y' to silence this warning.\n",
-			        POSITION_INPUTDEV, strerror(errno));
+			if (!background)
+				fprintf(stderr,
+				        "WARNING: Cannot open hdaps position input file %s (%s). "
+				        "You may be using an incompatible version of the hdaps module, "
+				        "or missing the required udev rule. "
+				        "Falling back to reading the position from sysfs (uses more power). "
+				        "Use '-y' to silence this warning.\n",
+				        POSITION_INPUTDEV, strerror(errno));
 			poll_sysfs = 1;
 		}
 	}
@@ -653,6 +672,8 @@ int main (int argc, char** argv)
 	}
 
 	mlockall(MCL_FUTURE);
+
+	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
 	if (verbose) {
 		struct list *p = disklist;
@@ -750,7 +771,7 @@ int main (int argc, char** argv)
 				 * swapped out).
 				*/
 				if (!parked)
-					printf("%.24s: parking\n", ctime(&now));
+					printlog("parking", background);
 				parked = 1;
 				parked_utime = unow;
 			} 
@@ -761,20 +782,21 @@ int main (int argc, char** argv)
 				struct list *p = disklist;
 				while (p != NULL) {
 					if (!dry_run && !read_int(p->protect_file))
-						printf("\nError! Not parked when we "
+						printlog("Error! Not parked when we "
 						       "thought we were... (paged out "
-					               "and timer expired?)\n");
+					               "and timer expired?)", background);
 					/* Freeze has expired */
 					write_protect(p->protect_file, 0); /* unprotect */
 					p = p->next;
 				}
 				parked = 0;
-				printf("%.24s: un-parking\n", ctime(&now));
+				printlog("un-parking", background);
 			}
 			while (pause_now) {
 				pause_now=0;
-				printf("%.24s: pausing for %d seconds\n", 
-				       ctime(&now), SIGUSR1_SLEEP_SEC);
+				char pause_msg[BUF_LEN];
+				snprintf(pause_msg, BUF_LEN, "pausing for %d seconds", SIGUSR1_SLEEP_SEC);
+				printlog(pause_msg, background);
 				sleep(SIGUSR1_SLEEP_SEC);
 			}
 		}
@@ -782,6 +804,7 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
+	closelog();
 	munlockall();
 	return ret;
 }
