@@ -27,6 +27,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#include "config.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -285,7 +286,7 @@ void SIGTERM_handler(int sig)
  */
 void usage()
 {
-	printf("Usage: hdapsd [OPTIONS]\n");
+	printf("Usage: "PACKAGE_NAME" [OPTIONS]\n");
 	printf("\n");
 	printf("Required options:\n");
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
@@ -304,7 +305,7 @@ void usage()
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to accelerometer.\n");
 	printf("\n");
-	printf("You can send SIGUSR1 to deactivate hdapsd for %d seconds.\n",
+	printf("You can send SIGUSR1 to deactivate "PACKAGE_NAME" for %d seconds.\n",
 		SIGUSR1_SLEEP_SEC);
 	printf("\n");
 	exit(1);
