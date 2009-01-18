@@ -282,6 +282,15 @@ void SIGTERM_handler(int sig)
 }
 
 /*
+ * version() - display version information and exit
+ */
+void version()
+{
+	printf(PACKAGE_STRING"\n");
+	exit(0);
+}
+
+/*
  * usage() - display usage instructions and exit 
  */
 void usage()
@@ -290,8 +299,10 @@ void usage()
 	printf("\n");
 	printf("Required options:\n");
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
-	printf("                                     Can be given multiple times to protect multiple devices.\n");
+	printf("                                     Can be given multiple times\n");
+	printf("                                     to protect multiple devices.\n");
 	printf("   -s --sensitivity=<sensitivity>    A suggested starting <sensitivity> is 15.\n");
+	printf("\n");
 	printf("Additional options:\n");
 	printf("   -a --adaptive                     Adaptive threshold (automatic\n");
 	printf("                                     increase when the built-in\n");
@@ -304,10 +315,13 @@ void usage()
 	printf("                                     it's set to %s.\n", PID_FILE);
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to accelerometer.\n");
+	printf("   -V --version                      Display version information and exit.\n");
+	printf("   -h --help                         Display this message and exit.\n");
 	printf("\n");
 	printf("You can send SIGUSR1 to deactivate "PACKAGE_NAME" for %d seconds.\n",
 		SIGUSR1_SLEEP_SEC);
 	printf("\n");
+	printf("Send bugs, coments and suggestions to "PACKAGE_BUGREPORT"\n");
 	exit(1);
 }
 
@@ -549,10 +563,12 @@ int main (int argc, char** argv)
 		{"pidfile", optional_argument, NULL, 'p'},
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
 		{NULL, 0, NULL, 0}
 	};
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::ty", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVh", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -584,6 +600,10 @@ int main (int argc, char** argv)
 			case 'y':
 				poll_sysfs = 1;
 				break;
+			case 'V':
+				version();
+				break;
+			case 'h':
 			default:
 				usage();
 				break;
