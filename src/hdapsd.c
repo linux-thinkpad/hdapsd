@@ -729,9 +729,7 @@ int main (int argc, char** argv)
 
 	signal(SIGUSR1, SIGUSR1_handler);
 
-	if (background) {
-		signal(SIGTERM, SIGTERM_handler);
-	}
+	signal(SIGTERM, SIGTERM_handler);
 
 	while (running) {
 		if (poll_sysfs) {
