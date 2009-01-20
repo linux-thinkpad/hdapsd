@@ -87,6 +87,7 @@ static int dry_run = 0;
 static int poll_sysfs = 0;
 static int sampling_rate;
 static int running = 1;
+static int background = 0;
 
 char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
@@ -104,7 +105,7 @@ struct list *disklist = NULL;
  *                  or post it to the syslog
  */
 
-void printlog (char *msg, int background)
+void printlog (char *msg)
 {
 	time_t now;
 
@@ -561,7 +562,7 @@ int main (int argc, char** argv)
 	struct utsname sysinfo;
 	int c, park_now, protect_factor;
 	int x=0, y=0;
-	int fd, i, ret, threshold = 0, background = 0, adaptive=0,
+	int fd, i, ret, threshold = 0, adaptive=0,
 	  pidfile = 0, parked = 0;
 	double unow = 0, parked_utime = 0;
 	time_t now;
@@ -614,7 +615,7 @@ int main (int argc, char** argv)
 				}
 				break;
 			case 't':
-				printlog("Dry run, will not actually park heads or freeze queue.", background);
+				printlog("Dry run, will not actually park heads or freeze queue.");
 				dry_run = 1;
 				break;
 			case 'y':
@@ -685,7 +686,7 @@ int main (int argc, char** argv)
 		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
 	}
 
-	printlog("Starting "PACKAGE_NAME, background);
+	printlog("Starting "PACKAGE_NAME);
 
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
@@ -700,7 +701,7 @@ int main (int argc, char** argv)
 		if (fd < 0) {
 			char errmsg[BUF_LEN];
 			snprintf(errmsg, BUF_LEN, "Could not open %s", p->protect_file);
-			printlog (errmsg, background);
+			printlog (errmsg);
 			free_disk(disklist);
 			return 1;
 		}
@@ -775,7 +776,7 @@ int main (int argc, char** argv)
 				 * swapped out).
 				*/
 				if (!parked)
-					printlog("parking", background);
+					printlog("parking");
 				parked = 1;
 				parked_utime = unow;
 			} 
@@ -788,19 +789,19 @@ int main (int argc, char** argv)
 					if (!dry_run && !read_int(p->protect_file))
 						printlog("Error! Not parked when we "
 						       "thought we were... (paged out "
-					               "and timer expired?)", background);
+					               "and timer expired?)");
 					/* Freeze has expired */
 					write_protect(p->protect_file, 0); /* unprotect */
 					p = p->next;
 				}
 				parked = 0;
-				printlog("un-parking", background);
+				printlog("un-parking");
 			}
 			while (pause_now) {
 				pause_now=0;
 				char pause_msg[BUF_LEN];
 				snprintf(pause_msg, BUF_LEN, "pausing for %d seconds", SIGUSR1_SLEEP_SEC);
-				printlog(pause_msg, background);
+				printlog(pause_msg);
 				sleep(SIGUSR1_SLEEP_SEC);
 			}
 		}
@@ -808,7 +809,7 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
-	printlog("Terminating "PACKAGE_NAME, background);
+	printlog("Terminating "PACKAGE_NAME);
 	closelog();
 	if (pidfile)
 		unlink(pid_file);
