@@ -586,6 +586,8 @@ int main (int argc, char** argv)
 		{NULL, 0, NULL, 0}
 	};
 
+	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
+
 	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVh", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
@@ -612,7 +614,7 @@ int main (int argc, char** argv)
 				}
 				break;
 			case 't':
-				printf("Dry run, will not actually park heads or freeze queue.\n");
+				printlog("Dry run, will not actually park heads or freeze queue.", background);
 				dry_run = 1;
 				break;
 			case 'y':
@@ -673,8 +675,6 @@ int main (int argc, char** argv)
 
 	mlockall(MCL_FUTURE);
 
-	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
-
 	if (verbose) {
 		struct list *p = disklist;
 		while (p != NULL) {
@@ -684,6 +684,8 @@ int main (int argc, char** argv)
 		printf("threshold: %i\n", threshold);
 		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
 	}
+
+	printlog("Starting "PACKAGE_NAME, background);
 
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
@@ -696,7 +698,9 @@ int main (int argc, char** argv)
 				fd = open (p->protect_file, O_RDWR);
 			}
 		if (fd < 0) {
-			printf ("Could not open %s\n", p->protect_file);
+			char errmsg[BUF_LEN];
+			snprintf(errmsg, BUF_LEN, "Could not open %s", p->protect_file);
+			printlog (errmsg, background);
 			free_disk(disklist);
 			return 1;
 		}
@@ -804,6 +808,7 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
+	printlog("Terminating "PACKAGE_NAME, background);
 	closelog();
 	munlockall();
 	return ret;
