@@ -99,6 +99,23 @@ struct list {
 struct list *disklist = NULL;
 
 /*
+ * printlog (msg) - either print the message to stdout
+ *                  or post it to the syslog
+ */
+
+void printlog (char *msg, int background)
+{
+	time_t now;
+
+	if (background)
+		syslog(LOG_INFO, msg);
+	else {
+		now = time((time_t *)NULL);
+		printf("%.24s: %s\n", ctime(&now), msg);
+	}
+}
+
+/*
  * slurp_file - read the content of a file (up to BUF_LEN-1) into a string.
  *
  * We open and close the file on every invocation, which is lame but due to
@@ -279,6 +296,7 @@ void SIGTERM_handler(int sig)
 {
 	signal(SIGTERM, SIGTERM_handler);
 	unlink(pid_file);
+	printlog("Terminating "PACKAGE_NAME, 1);
 	exit(0);
 }
 
@@ -532,23 +550,6 @@ void free_disk (struct list *disk) {
 		if (disk->next != NULL)
 			free_disk(disk->next);
 		free(disk);
-	}
-}
-
-/*
- * printlog (msg) - either print the message to stdout
- *                  or post it to the syslog
- */
-
-void printlog (char *msg, int background)
-{
-	time_t now;
-
-	if (background)
-		syslog(LOG_INFO, msg);
-	else {
-		now = time((time_t *)NULL);
-		printf("%.24s: %s\n", ctime(&now), msg);
 	}
 }
 
