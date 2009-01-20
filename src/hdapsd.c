@@ -86,6 +86,7 @@ static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
 static int sampling_rate;
+static int running = 1;
 
 char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
@@ -295,9 +296,7 @@ void SIGUSR1_handler(int sig)
 void SIGTERM_handler(int sig)
 {
 	signal(SIGTERM, SIGTERM_handler);
-	unlink(pid_file);
-	printlog("Terminating "PACKAGE_NAME, 1);
-	exit(0);
+	running = 0;
 }
 
 /*
@@ -729,11 +728,11 @@ int main (int argc, char** argv)
 
 	signal(SIGUSR1, SIGUSR1_handler);
 
-	if (background && pidfile) {
+	if (background) {
 		signal(SIGTERM, SIGTERM_handler);
 	}
 
-	while (1) {
+	while (running) {
 		if (poll_sysfs) {
 			usleep (1000000/sampling_rate);
 			ret = read_position_from_sysfs (&x, &y);
@@ -811,6 +810,8 @@ int main (int argc, char** argv)
 	free_disk(disklist);
 	printlog("Terminating "PACKAGE_NAME, background);
 	closelog();
+	if (pidfile)
+		unlink(pid_file);
 	munlockall();
 	return ret;
 }
