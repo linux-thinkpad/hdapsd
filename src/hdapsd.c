@@ -565,7 +565,6 @@ int main (int argc, char** argv)
 	int fd, i, ret, threshold = 0, adaptive=0,
 	  pidfile = 0, parked = 0;
 	double unow = 0, parked_utime = 0;
-	time_t now;
 
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
 		protect_factor = 1000;
@@ -755,8 +754,6 @@ int main (int argc, char** argv)
 				printf("readout error (%d)\n", ret);
 			continue;
 		}
-
-		now = time((time_t *)NULL); /* sec */
 
 		park_now = analyze(x, y, unow, threshold, adaptive, parked);
 
