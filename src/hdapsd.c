@@ -706,9 +706,7 @@ int main (int argc, char** argv)
 				fd = open (p->protect_file, O_RDWR);
 			}
 		if (fd < 0) {
-			char errmsg[BUF_LEN];
-			snprintf(errmsg, BUF_LEN, "Could not open %s", p->protect_file);
-			printlog (errmsg);
+			printlog ("Could not open %s", p->protect_file);
 			free_disk(disklist);
 			return 1;
 		}
@@ -802,9 +800,7 @@ int main (int argc, char** argv)
 			}
 			while (pause_now) {
 				pause_now=0;
-				char pause_msg[BUF_LEN];
-				snprintf(pause_msg, BUF_LEN, "pausing for %d seconds", SIGUSR1_SLEEP_SEC);
-				printlog(pause_msg);
+				printlog("pausing for %d seconds", SIGUSR1_SLEEP_SEC);
 				sleep(SIGUSR1_SLEEP_SEC);
 			}
 		}
