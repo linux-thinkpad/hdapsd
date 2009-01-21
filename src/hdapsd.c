@@ -89,6 +89,7 @@ static int poll_sysfs = 0;
 static int sampling_rate;
 static int running = 1;
 static int background = 0;
+static int dosyslog = 0;
 
 char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
@@ -117,7 +118,7 @@ void printlog (const char *fmt, ...)
 	vsnprintf(msg, len+1024, fmt, ap);
 	va_end(ap);
 
-	if (background)
+	if (dosyslog)
 		syslog(LOG_INFO, msg);
 	else {
 		now = time((time_t *)NULL);
@@ -342,6 +343,8 @@ void usage()
 	printf("                                     it's set to %s.\n", PID_FILE);
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to accelerometer.\n");
+	printf("   -l --syslog                       Log to syslog instead of stdout.\n");
+	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
 	printf("   -h --help                         Display this message and exit.\n");
 	printf("\n");
@@ -591,12 +594,13 @@ int main (int argc, char** argv)
 		{"poll-sysfs", no_argument, NULL, 'y'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
+		{"syslog", no_argument, NULL, 'l'},
 		{NULL, 0, NULL, 0}
 	};
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVh", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhl", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -630,6 +634,9 @@ int main (int argc, char** argv)
 				break;
 			case 'V':
 				version();
+				break;
+			case 'l':
+				dosyslog = 1;
 				break;
 			case 'h':
 			default:
