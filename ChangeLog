@@ -1,37 +1,24 @@
-2009-01-17  Evgeni Golov <sargentd@die-welt.net>
+hdapsd 2009xxxx:
+	Evgeni Golov <sargentd@die-welt.net>:
+	* Support for multiple disks.
+	* Support for logging to syslog when running in background.
+	* Use autotools.
 
-  * README: add something that can be called README
+hdapsd 20081004:
+	Elias Oltmanns <eo@nebensachen.de>:
+	* Prepare for the new interface in kernel 2.6.28
 
-  * src/hdapsd.c: Add myself and Elias to copyright holders
+hdapsd 20070803:
+	Shem Multinymous <multinymous@gmail.com>:
+	* Read the accelerometer data from the input device provided by
+	  tp_smapi>=0.32, instead of sysfs. This reduce timer interrupts
+	  and improves temporal synchronization of userspace<->kernel vs.
+	  kernel<->hardware. If the input device doesn't exist, it falls
+	  back to sysfs.
+	* Add a new new --poll-sysfs (-y) parameter to force using sysfs
+	  instead of the input device.
+	* Read the sampling rate from the sysfs file provided by tp_smapi
+	  (if it exists).
+	* Add a --dry-run (-t) parameter, telling hdapsd to do everything
+	  except actually parking the drive. Very useful for testing.
 
-  * configure.ac: create config.h in src/, not in root
-
-  * AUTHORS: add myself to AUTHORS :)
-
-  * doc/hdapsd.8, src/hdapsd.c: Update documentation for multidisk usage (and
-  other small fixes to the manpage)
-
-2008-12-14  Evgeni Golov <sargentd@die-welt.net>
-
-  * src/hdapsd.c: protect_file does not need to be static
-
-  * src/hdapsd.c: Only check which interface we should use when we add a disk,
-  not on every access to it
-
-  * src/hdapsd.c: first attempt to add multi-disk support
-
-  * doc/hdapsd.8: Small manpage fix
-
-2008-12-13  Evgeni Golov <sargentd@die-welt.net>
-
-  * .gitignore: Update .gitignore
-
-  * AUTHORS, COPYING: add proper AUTHORS and COPYING files
-
-  * Makefile.am: Add doc and misc to EXTRA_DIST
-
-  * Makefile.am, misc/hdapsd.rules: Add udev rules
-
-  * Makefile.am, doc/hdapsd.8: Add manpage from the Debian package
-
-  * .gitignore: Add .gitignore
