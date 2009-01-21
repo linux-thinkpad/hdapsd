@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
@@ -105,9 +106,16 @@ struct list *disklist = NULL;
  *                  or post it to the syslog
  */
 
-void printlog (char *msg)
+void printlog (const char *fmt, ...)
 {
 	time_t now;
+	int len = sizeof(fmt);
+
+	char msg[len+1024];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(msg, len+1024, fmt, ap);
+	va_end(ap);
 
 	if (background)
 		syslog(LOG_INFO, msg);
