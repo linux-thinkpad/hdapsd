@@ -1,5 +1,6 @@
 *~
 .deps/*
+src/.deps/*
 INSTALL
 Makefile
 Makefile.in
