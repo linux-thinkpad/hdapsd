@@ -1,4 +1,4 @@
-.TH HDAPSD "8" "August 2007" "hdapsd 20090118" "User Commands"
+.TH "HDAPSD" 8 "__DATE__" "hdapsd __VERSION__" "hdapsd"
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
