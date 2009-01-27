@@ -103,8 +103,8 @@ struct list {
 struct list *disklist = NULL;
 
 /*
- * printlog (msg) - either print the message to stdout
- *                  or post it to the syslog
+ * printlog (stream, fmt) - print the formatted message to syslog
+ *                          or to the defined stream
  */
 
 void printlog (FILE *stream, const char *fmt, ...)
