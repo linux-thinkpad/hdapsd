@@ -107,7 +107,7 @@ struct list *disklist = NULL;
  *                  or post it to the syslog
  */
 
-void printlog (const char *fmt, ...)
+void printlog (FILE *stream, const char *fmt, ...)
 {
 	time_t now;
 	int len = sizeof(fmt);
@@ -122,7 +122,7 @@ void printlog (const char *fmt, ...)
 		syslog(LOG_INFO, msg);
 	else {
 		now = time((time_t *)NULL);
-		printf("%.24s: %s\n", ctime(&now), msg);
+		fprintf(stream, "%.24s: %s\n", ctime(&now), msg);
 	}
 }
 
@@ -626,7 +626,7 @@ int main (int argc, char** argv)
 				}
 				break;
 			case 't':
-				printlog("Dry run, will not actually park heads or freeze queue.");
+				printlog(stdout, "Dry run, will not actually park heads or freeze queue.");
 				dry_run = 1;
 				break;
 			case 'y':
@@ -651,14 +651,13 @@ int main (int argc, char** argv)
 	if (!poll_sysfs) {
 		hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
 		if (hdaps_input_fd<0) {
-			if (!background)
-				fprintf(stderr,
-				        "WARNING: Cannot open hdaps position input file %s (%s). "
-				        "You may be using an incompatible version of the hdaps module, "
-				        "or missing the required udev rule. "
-				        "Falling back to reading the position from sysfs (uses more power). "
-				        "Use '-y' to silence this warning.\n",
-				        POSITION_INPUTDEV, strerror(errno));
+			printlog(stdout,
+			        "WARNING: Cannot open hdaps position input file %s (%s). "
+			        "You may be using an incompatible version of the hdaps module, "
+			        "or missing the required udev rule. "
+			        "Falling back to reading the position from sysfs (uses more power). "
+			        "Use '-y' to silence this warning.\n",
+			        POSITION_INPUTDEV, strerror(errno));
 			poll_sysfs = 1;
 		}
 	}
@@ -668,7 +667,7 @@ int main (int argc, char** argv)
 		if (pidfile) {
 			fd = open (pid_file, O_WRONLY | O_CREAT, 0644);
 			if (fd < 0) {
-				perror ("open(pid_file)");
+				printlog (stderr, "Could not create pidfile: %s", pid_file);
 				return 1;
 			}
 		}
@@ -700,7 +699,7 @@ int main (int argc, char** argv)
 		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
 	}
 
-	printlog("Starting "PACKAGE_NAME);
+	printlog(stdout, "Starting "PACKAGE_NAME);
 
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
@@ -713,7 +712,7 @@ int main (int argc, char** argv)
 				fd = open (p->protect_file, O_RDWR);
 			}
 		if (fd < 0) {
-			printlog ("Could not open %s", p->protect_file);
+			printlog (stderr, "Could not open %s", p->protect_file);
 			free_disk(disklist);
 			return 1;
 		}
@@ -784,7 +783,7 @@ int main (int argc, char** argv)
 				 * swapped out).
 				*/
 				if (!parked)
-					printlog("parking");
+					printlog(stdout, "parking");
 				parked = 1;
 				parked_utime = unow;
 			} 
@@ -795,7 +794,7 @@ int main (int argc, char** argv)
 				struct list *p = disklist;
 				while (p != NULL) {
 					if (!dry_run && !read_int(p->protect_file))
-						printlog("Error! Not parked when we "
+						printlog(stderr, "Error! Not parked when we "
 						       "thought we were... (paged out "
 					               "and timer expired?)");
 					/* Freeze has expired */
@@ -803,11 +802,11 @@ int main (int argc, char** argv)
 					p = p->next;
 				}
 				parked = 0;
-				printlog("un-parking");
+				printlog(stdout, "un-parking");
 			}
 			while (pause_now) {
 				pause_now=0;
-				printlog("pausing for %d seconds", SIGUSR1_SLEEP_SEC);
+				printlog(stdout, "pausing for %d seconds", SIGUSR1_SLEEP_SEC);
 				sleep(SIGUSR1_SLEEP_SEC);
 			}
 		}
@@ -815,7 +814,7 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
-	printlog("Terminating "PACKAGE_NAME);
+	printlog(stdout, "Terminating "PACKAGE_NAME);
 	closelog();
 	if (pidfile)
 		unlink(pid_file);
