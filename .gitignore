@@ -1,4 +1,5 @@
 *~
+*.bak
 .deps/*
 src/.deps/*
 INSTALL
