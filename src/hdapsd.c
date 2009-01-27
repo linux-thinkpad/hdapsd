@@ -143,20 +143,20 @@ static int slurp_file(const char* filename, char* buf)
 	int ret;
 	int fd = open (filename, O_RDONLY);
 	if (fd < 0) {
-		fprintf(stderr, "open(%s): %s\n", filename, strerror(errno));
+		printlog(stderr, "Could not open %s: %s.\nDo you have the hdaps module loaded?", filename, strerror(errno));
 		return fd;
 	}	
 
 	ret = read (fd, buf, BUF_LEN-1);
 	if (ret < 0) {
-		fprintf(stderr, "read(%s): %s\n", filename, strerror(errno));
+		printlog(stderr, "Could not read from %s: %s", filename, strerror(errno));
 	} else {
 		buf[ret] = 0; /* null-terminate so we can parse safely */
 	ret = 0;
 	}
 
 	if (close (fd))
-		fprintf(stderr, "close(%s): %s\n", filename, strerror(errno));
+		printlog(stderr, "Could not close %s: %s", filename, strerror(errno));
 
 	return ret;
 }
@@ -216,11 +216,11 @@ static int read_position_from_inputdev (int *x, int *y, double *utime)
 	while (1) {
 		len = read(hdaps_input_fd, &ev, sizeof(struct input_event));
 		if (len < 0) {
-			fprintf(stderr, "ERROR: failed reading %s (%s).\n", POSITION_INPUTDEV, strerror(errno));
+			printlog(stderr, "ERROR: failed reading %s (%s).", POSITION_INPUTDEV, strerror(errno));
 			return len;
 		}
 		if (len < (int)sizeof(struct input_event)) {
-			fprintf(stderr, "ERROR: short read from %s (%d bytes).\n", POSITION_INPUTDEV, len);
+			printlog(stderr, "ERROR: short read from %s (%d bytes).", POSITION_INPUTDEV, len);
 			return -EIO;
 		}
 		switch (ev.type) {
@@ -265,21 +265,21 @@ static int write_protect (const char *path, int val)
 
 	fd = open (path, O_WRONLY);
 	if (fd < 0) {
-		perror ("open");
+		printlog (stderr, "Could not open %s", path);
 		return fd;
 	}	
 
 	ret = write (fd, buf, strlen(buf));
 
 	if (ret < 0) {
-		perror ("write");
+		printlog (stderr, "Could not write to %s.\nDoes your kernel/drive support IDLE_IMMEDIATE with UNLOAD?", path);
 		goto out;
 	}
 	ret = 0;
 
 out:
 	if (close (fd))
-		perror ("close");
+		printlog (stderr, "Could not close %s", path);
 
 	return ret;
 }
@@ -527,7 +527,7 @@ void add_disk (char* disk) {
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
 		if (disklist == NULL) {
-			printf("Error allocating memory\n");
+			printlog(stderr, "Error allocating memory.");
 			exit(EXIT_FAILURE);
 		}
 		else {
@@ -542,7 +542,7 @@ void add_disk (char* disk) {
 			p = p->next;
 		p->next = (struct list *)malloc(sizeof(struct list));
 		if (p->next == NULL) {
-			printf("Error allocating memory\n");
+			printlog(stderr, "Error allocating memory.");
 			exit(EXIT_FAILURE);
 		}
 		else {
@@ -654,9 +654,9 @@ int main (int argc, char** argv)
 			printlog(stdout,
 			        "WARNING: Cannot open hdaps position input file %s (%s). "
 			        "You may be using an incompatible version of the hdaps module, "
-			        "or missing the required udev rule. "
-			        "Falling back to reading the position from sysfs (uses more power). "
-			        "Use '-y' to silence this warning.\n",
+			        "or missing the required udev rule.\n"
+			        "Falling back to reading the position from sysfs (uses more power).\n"
+			        "Use '-y' to silence this warning.",
 			        POSITION_INPUTDEV, strerror(errno));
 			poll_sysfs = 1;
 		}
@@ -677,11 +677,11 @@ int main (int argc, char** argv)
 			snprintf (buf, BUF_LEN, "%d\n", getpid());
 			ret = write (fd, buf, strlen(buf));
 			if (ret < 0) {
-				perror ("write(pid_file)");
+				printlog (stderr, "Could not write to pidfile %s", pid_file);
 				return 1;
 			}
 			if (close (fd)) {
-				perror ("close(pid_file)");
+				printlog (stderr, "Could not close pidfile %s", pid_file);
 				return 1;
 			}
 		}
