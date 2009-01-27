@@ -6,7 +6,7 @@ CLEANFILES = @PACKAGE_NAME@.8
 
 man_MANS = @PACKAGE_NAME@.8
 man_PRE = @PACKAGE_NAME@.man
-dist_man_MANS = @PACKAGE_NAME@.man
+EXTRA_DIST = @PACKAGE_NAME@.man
 
 .man.8:
 	sed $(MAN_SUBSTS) < $< > $@
