@@ -15,3 +15,4 @@ install-sh
 missing
 stamp-h1
 *.tar.gz
+doc/hdapsd.8
