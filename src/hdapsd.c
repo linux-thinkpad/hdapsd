@@ -1,5 +1,5 @@
 /*
- * hdapsd.c - Read from the HDAPS (HardDrive Active Protection System)
+ * hdapsd.c - Read from the HDAPS (Hard Drive Active Protection System)
  *            and protect the drive if motion over threshold...
  *
  *            Derived from pivot.c by Robert Love.
@@ -351,7 +351,7 @@ void usage()
 	printf("You can send SIGUSR1 to deactivate "PACKAGE_NAME" for %d seconds.\n",
 		SIGUSR1_SLEEP_SEC);
 	printf("\n");
-	printf("Send bugs, coments and suggestions to "PACKAGE_BUGREPORT"\n");
+	printf("Send bugs, comments and suggestions to "PACKAGE_BUGREPORT"\n");
 	exit(1);
 }
 
