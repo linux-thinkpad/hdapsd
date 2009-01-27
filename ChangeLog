@@ -12,7 +12,7 @@ hdapsd 20070803:
 	Shem Multinymous <multinymous@gmail.com>:
 	* Read the accelerometer data from the input device provided by
 	  tp_smapi>=0.32, instead of sysfs. This reduce timer interrupts
-	  and improves temporal synchronization of userspace<->kernel vs.
+	  and improves temporal synchronization of user-space<->kernel vs.
 	  kernel<->hardware. If the input device doesn't exist, it falls
 	  back to sysfs.
 	* Add a new new --poll-sysfs (-y) parameter to force using sysfs
