@@ -3,6 +3,7 @@ hdapsd 2009xxxx:
 	* Support for multiple disks.
 	* Support for logging to syslog when running in background.
 	* Use autotools.
+	* Make the error-messages more user-friendly.
 
 hdapsd 20081004:
 	Elias Oltmanns <eo@nebensachen.de>:
