@@ -713,7 +713,7 @@ int main (int argc, char** argv)
 				fd = open (p->protect_file, O_RDWR);
 			}
 		if (fd < 0) {
-			printlog (stderr, "Could not open %s", p->protect_file);
+			printlog (stderr, "Could not open %s\nDoes your kernel/drive support IDLE_IMMEDIATE with UNLOAD?", p->protect_file);
 			free_disk(disklist);
 			return 1;
 		}
