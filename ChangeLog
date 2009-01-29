@@ -1,4 +1,4 @@
-hdapsd 2009xxxx:
+hdapsd 20090129:
 	Evgeni Golov <sargentd@die-welt.net>:
 	* Support for multiple disks.
 	* Support for logging to syslog when running in background.

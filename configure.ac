@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(hdapsd, 20081004, hdaps-devel@lists.sourceforge.net)
+AC_INIT(hdapsd, 20090129, hdaps-devel@lists.sourceforge.net)
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/hdapsd.c])
 AC_CONFIG_HEADERS([src/config.h])
