@@ -34,7 +34,7 @@ Don't actually park the drive.
 Force use of sysfs interface to accelerometer.
 .TP
 \fB\-l\fR \fB\-\-syslog\fR
-Log to syslog instead of stdout.
+Log to syslog instead of stdout/stderr.
 .TP
 \fB\-V\fR \fB\-\-version\fR
 Display version information and exit.
