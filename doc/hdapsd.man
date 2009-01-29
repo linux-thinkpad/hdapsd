@@ -11,7 +11,7 @@ hdapsd \- park the drive in case of an emergency
 .SS "Additional options:"
 .TP
 \fB\-s\fR \fB\-\-sensitivity=\fR\fI<sensitivity>\fR
-How sensitive should we be to movements?
+How sensitive should we be to movements.
 Defaults to 15, higher values mean less sensitive.
 .TP
 \fB\-a\fR \fB\-\-adaptive\fR

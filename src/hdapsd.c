@@ -331,7 +331,7 @@ void usage()
 	printf("                                     to protect multiple devices.\n");
 	printf("\n");
 	printf("Additional options:\n");
-	printf("   -s --sensitivity=<sensitivity>    How sensitive should we be to movements?\n");
+	printf("   -s --sensitivity=<sensitivity>    How sensitive should we be to movements.\n");
 	printf("                                     Defaults to 15, higher values mean less sensitive.\n");
 	printf("   -a --adaptive                     Adaptive threshold (automatic\n");
 	printf("                                     increase when the built-in\n");
@@ -344,7 +344,7 @@ void usage()
 	printf("                                     it's set to %s.\n", PID_FILE);
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to accelerometer.\n");
-	printf("   -l --syslog                       Log to syslog instead of stdout.\n");
+	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
 	printf("   -h --help                         Display this message and exit.\n");
