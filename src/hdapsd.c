@@ -329,9 +329,10 @@ void usage()
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
 	printf("                                     Can be given multiple times\n");
 	printf("                                     to protect multiple devices.\n");
-	printf("   -s --sensitivity=<sensitivity>    A suggested starting <sensitivity> is 15.\n");
 	printf("\n");
 	printf("Additional options:\n");
+	printf("   -s --sensitivity=<sensitivity>    How sensitive should we be to movements?\n");
+	printf("                                     Defaults to 15, higher values mean less sensitive.\n");
 	printf("   -a --adaptive                     Adaptive threshold (automatic\n");
 	printf("                                     increase when the built-in\n");
 	printf("                                     keyboard/mouse are used).\n");
@@ -573,7 +574,7 @@ int main (int argc, char** argv)
 	struct utsname sysinfo;
 	int c, park_now, protect_factor;
 	int x=0, y=0;
-	int fd, i, ret, threshold = 0, adaptive=0,
+	int fd, i, ret, threshold = 15, adaptive=0,
 	  pidfile = 0, parked = 0;
 	double unow = 0, parked_utime = 0;
 

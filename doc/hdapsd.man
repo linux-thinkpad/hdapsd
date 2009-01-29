@@ -2,16 +2,17 @@
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
-.B hdapsd \-d \fI<device>\fR \fB\-s\fR \fI<sensitivity>\fR [\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR]
+.B hdapsd \-d \fI<device>\fR [\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR]
 .SH OPTIONS
 .SS "Required options:"
 .TP
 \fB\-d\fR \fB\-\-device=\fR\fI<device>\fR
 <device> is likely to be hda or sda. Can be given multiple times to protect multiple devices.
+.SS "Additional options:"
 .TP
 \fB\-s\fR \fB\-\-sensitivity=\fR\fI<sensitivity>\fR
-A suggested starting <sensitivity> is 15.
-.SS "Additional options:"
+How sensitive should we be to movements?
+Defaults to 15, higher values mean less sensitive.
 .TP
 \fB\-a\fR \fB\-\-adaptive\fR
 Adaptive threshold (automatic increase when the built\-in keyboard/mouse are used).
