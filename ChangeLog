@@ -4,6 +4,7 @@ hdapsd 2009xxxx:
 	* Support for logging to syslog when running in background.
 	* Use autotools.
 	* Make the error-messages more user-friendly.
+	* -s is optional now. Sensitivity defaults to 15.
 
 hdapsd 20081004:
 	Elias Oltmanns <eo@nebensachen.de>:
