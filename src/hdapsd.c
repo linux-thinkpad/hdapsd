@@ -331,11 +331,11 @@ void usage()
 	printf("                                     to protect multiple devices.\n");
 	printf("\n");
 	printf("Additional options:\n");
-	printf("   -s --sensitivity=<sensitivity>    How sensitive should we be to movements.\n");
-	printf("                                     Defaults to 15, higher values mean less sensitive.\n");
-	printf("   -a --adaptive                     Adaptive threshold (automatic\n");
-	printf("                                     increase when the built-in\n");
-	printf("                                     keyboard/mouse are used).\n");
+	printf("   -s --sensitivity=<sensitivity>    How sensitive "PACKAGE_NAME" should be to movements.\n");
+	printf("                                     Defaults to 15, higher value means less\n");
+	printf("                                     sensitive.\n");
+	printf("   -a --adaptive                     Adaptive threshold (automatic increase\n");
+	printf("                                     when the built-in keyboard/mouse are used).\n");
 	printf("   -v --verbose                      Get verbose statistics.\n");
 	printf("   -b --background                   Run the process in the background.\n");
 	printf("   -p --pidfile[=<pidfile>]          Create a pid file when running\n");
@@ -343,7 +343,8 @@ void usage()
 	printf("                                     If <pidfile> is not specified,\n");
 	printf("                                     it's set to %s.\n", PID_FILE);
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
-	printf("   -y --poll-sysfs                   Force use of sysfs interface to accelerometer.\n");
+	printf("   -y --poll-sysfs                   Force use of sysfs interface to\n");
+	printf("                                     accelerometer.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
