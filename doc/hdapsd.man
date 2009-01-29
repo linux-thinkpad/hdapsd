@@ -2,7 +2,7 @@
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
-.B hdapsd \-d \fI<device>\fR [\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR]
+.B hdapsd \-d \fI<device>\fR [\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
 .SH OPTIONS
 .SS "Required options:"
 .TP
