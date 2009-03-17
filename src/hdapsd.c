@@ -736,7 +736,7 @@ int main (int argc, char** argv)
     /* adapt to the driver's sampling rate */
 	sampling_rate = read_int(SAMPLING_RATE_FILE);
 	if (sampling_rate <= 0)
-		sampling_rate = DEFAULT_SAMPLING_RATE;;
+		sampling_rate = DEFAULT_SAMPLING_RATE;
 	if (verbose)
 		printf("sampling_rate: %d\n", sampling_rate);
 
