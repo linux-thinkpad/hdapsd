@@ -51,6 +51,7 @@
 #define KEYBD_ACTIVITY_FILE     "/sys/devices/platform/hdaps/mouse_activity"
 #define SAMPLING_RATE_FILE      "/sys/devices/platform/hdaps/sampling_rate"
 #define POSITION_INPUTDEV       "/dev/input/hdaps/accelerometer-event"
+#define AMS_POSITION_FILE	"/sys/devices/ams/current"
 #define BUF_LEN                 40
 
 #define FREEZE_SECONDS          1    /* period to freeze disk */
@@ -86,7 +87,7 @@ static int verbose = 0;
 static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
-static int sampling_rate;
+static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
@@ -175,6 +176,18 @@ static int read_position_from_sysfs (int *x, int *y)
 	return (sscanf (buf, "(%d,%d)\n", x, y) != 2);
 }
 
+/*
+ * read_position_from_ams() - read the (x,y[,z]) position from AMS via sysfs file
+ */
+static int read_position_from_ams (int *x, int *y)
+{
+	char buf[BUF_LEN];
+	int ret;
+	int z;
+	if ((ret = slurp_file(AMS_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "%d %d %d\n", x, y, &z) != 3);
+}
 /*
  * read_int() - read an integer from a file
  */
@@ -576,7 +589,7 @@ int main (int argc, char** argv)
 	int c, park_now, protect_factor;
 	int x=0, y=0;
 	int fd, i, ret, threshold = 15, adaptive=0,
-	  pidfile = 0, parked = 0;
+	  pidfile = 0, parked = 0, applemotion=0;
 	double unow = 0, parked_utime = 0;
 
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
@@ -597,12 +610,13 @@ int main (int argc, char** argv)
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
 		{"syslog", no_argument, NULL, 'l'},
+		{"ams", no_argument, NULL, 'm'},
 		{NULL, 0, NULL, 0}
 	};
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhl", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlm", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -640,6 +654,9 @@ int main (int argc, char** argv)
 			case 'l':
 				dosyslog = 1;
 				break;
+			case 'm':
+				applemotion = 1;
+				break;
 			case 'h':
 			default:
 				usage();
@@ -650,7 +667,7 @@ int main (int argc, char** argv)
 	if (!threshold || disklist == NULL)
 		usage(argv);
 
-	if (!poll_sysfs) {
+	if (!poll_sysfs && !applemotion) {
 		hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
 		if (hdaps_input_fd<0) {
 			printlog(stdout,
@@ -721,20 +738,27 @@ int main (int argc, char** argv)
 		close (fd);
 		p = p->next;
 	}
-	
+
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	ret = read_position_from_sysfs (&x, &y);
+	if (!applemotion)
+		ret = read_position_from_sysfs (&x, &y);
+	else
+		ret = read_position_from_ams (&x, &y);
 	if (background)
 		for (i=0; ret && i < 100; ++i) {
 			usleep (100000);	/* 10 Hz */
-			ret = read_position_from_sysfs (&x, &y);
+			if (!applemotion)
+				ret = read_position_from_sysfs (&x, &y);
+			else
+				ret = read_position_from_ams (&x, &y);
 		}
 	if (ret)
 		return 1;
 
     /* adapt to the driver's sampling rate */
-	sampling_rate = read_int(SAMPLING_RATE_FILE);
+	if (!applemotion)
+		sampling_rate = read_int(SAMPLING_RATE_FILE);
 	if (sampling_rate <= 0)
 		sampling_rate = DEFAULT_SAMPLING_RATE;
 	if (verbose)
@@ -748,6 +772,10 @@ int main (int argc, char** argv)
 		if (poll_sysfs) {
 			usleep (1000000/sampling_rate);
 			ret = read_position_from_sysfs (&x, &y);
+			unow = get_utime(); /* microsec */
+		} else if (applemotion) {
+			usleep (1000000/sampling_rate);
+			ret = read_position_from_ams (&x, &y);
 			unow = get_utime(); /* microsec */
 		} else {
 			double oldunow = unow;
