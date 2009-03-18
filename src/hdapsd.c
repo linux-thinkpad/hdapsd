@@ -52,6 +52,7 @@
 #define SAMPLING_RATE_FILE      "/sys/devices/platform/hdaps/sampling_rate"
 #define POSITION_INPUTDEV       "/dev/input/hdaps/accelerometer-event"
 #define AMS_POSITION_FILE	"/sys/devices/ams/current"
+#define AMS_POSITION_INPUTDEV	"/dev/input/event5"
 #define BUF_LEN                 40
 
 #define FREEZE_SECONDS          1    /* period to freeze disk */
@@ -667,17 +668,25 @@ int main (int argc, char** argv)
 	if (!threshold || disklist == NULL)
 		usage(argv);
 
-	if (!poll_sysfs && !applemotion) {
-		hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
-		if (hdaps_input_fd<0) {
-			printlog(stdout,
-			        "WARNING: Cannot open hdaps position input file %s (%s). "
-			        "You may be using an incompatible version of the hdaps module, "
-			        "or missing the required udev rule.\n"
-			        "Falling back to reading the position from sysfs (uses more power).\n"
-			        "Use '-y' to silence this warning.",
-			        POSITION_INPUTDEV, strerror(errno));
-			poll_sysfs = 1;
+	if (!poll_sysfs) {
+		if (!applemotion) {
+			hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
+			if (hdaps_input_fd<0) {
+				printlog(stdout,
+				        "WARNING: Cannot open hdaps position input file %s (%s). "
+				        "You may be using an incompatible version of the hdaps module, "
+				        "or missing the required udev rule.\n"
+				        "Falling back to reading the position from sysfs (uses more power).\n"
+				        "Use '-y' to silence this warning.",
+				        POSITION_INPUTDEV, strerror(errno));
+				poll_sysfs = 1;
+			}
+		} else {
+			hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY);
+			if (hdaps_input_fd<0) {
+				printlog(stdout, "No AMS input, joystick=1?");
+				poll_sysfs = 1;
+			}
 		}
 	}
 
@@ -769,11 +778,11 @@ int main (int argc, char** argv)
 	signal(SIGTERM, SIGTERM_handler);
 
 	while (running) {
-		if (poll_sysfs) {
+		if (poll_sysfs && !applemotion) {
 			usleep (1000000/sampling_rate);
 			ret = read_position_from_sysfs (&x, &y);
 			unow = get_utime(); /* microsec */
-		} else if (applemotion) {
+		} else if (poll_sysfs && applemotion) {
 			usleep (1000000/sampling_rate);
 			ret = read_position_from_ams (&x, &y);
 			unow = get_utime(); /* microsec */
