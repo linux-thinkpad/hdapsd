@@ -178,16 +178,15 @@ static int read_position_from_sysfs (int *x, int *y)
 }
 
 /*
- * read_position_from_ams() - read the (x,y[,z]) position from AMS via sysfs file
+ * read_position_from_ams() - read the (x,y,z) position from AMS via sysfs file
  */
-static int read_position_from_ams (int *x, int *y)
+static int read_position_from_ams (int *x, int *y, int *z)
 {
 	char buf[BUF_LEN];
 	int ret;
-	int z;
 	if ((ret = slurp_file(AMS_POSITION_FILE, buf)))
 		return ret;
-	return (sscanf (buf, "%d %d %d\n", x, y, &z) != 3);
+	return (sscanf (buf, "%d %d %d\n", x, y, z) != 3);
 }
 /*
  * read_int() - read an integer from a file
@@ -217,12 +216,12 @@ static int get_km_activity()
 
 
 /*
- * read_position_from_inputdev() - read the (x,y) position pair and time from hdaps
+ * read_position_from_inputdev() - read the (x,y,z) position pair and time from hdaps
  * via the hdaps input device. Blocks there is a change in position.
  * The x and y arguments should contain the last read values, since if one of them
  * doesn't change it will not be assigned.
  */
-static int read_position_from_inputdev (int *x, int *y, double *utime)
+static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 {
 	struct input_event ev;
 	int len, done = 0;
@@ -238,13 +237,16 @@ static int read_position_from_inputdev (int *x, int *y, double *utime)
 			return -EIO;
 		}
 		switch (ev.type) {
-			case EV_ABS: /* new X or Y */
+			case EV_ABS: /* new X, Y or Z */
 				switch (ev.code) {
 					case ABS_X:
 						*x = ev.value;
 						break;
 					case ABS_Y:
 						*y = ev.value; 
+						break;
+					case ABS_Z:
+						*z = ev.value;
 						break;
 					default:
 						continue;
@@ -588,7 +590,7 @@ int main (int argc, char** argv)
 {
 	struct utsname sysinfo;
 	int c, park_now, protect_factor;
-	int x=0, y=0;
+	int x=0, y=0, z=0;
 	int fd, i, ret, threshold = 15, adaptive=0,
 	  pidfile = 0, parked = 0, applemotion=0;
 	double unow = 0, parked_utime = 0;
@@ -753,14 +755,14 @@ int main (int argc, char** argv)
 	if (!applemotion)
 		ret = read_position_from_sysfs (&x, &y);
 	else
-		ret = read_position_from_ams (&x, &y);
+		ret = read_position_from_ams (&x, &y, &z);
 	if (background)
 		for (i=0; ret && i < 100; ++i) {
 			usleep (100000);	/* 10 Hz */
 			if (!applemotion)
 				ret = read_position_from_sysfs (&x, &y);
 			else
-				ret = read_position_from_ams (&x, &y);
+				ret = read_position_from_ams (&x, &y, &z);
 		}
 	if (ret)
 		return 1;
@@ -784,12 +786,12 @@ int main (int argc, char** argv)
 			unow = get_utime(); /* microsec */
 		} else if (poll_sysfs && applemotion) {
 			usleep (1000000/sampling_rate);
-			ret = read_position_from_ams (&x, &y);
+			ret = read_position_from_ams (&x, &y, &z);
 			unow = get_utime(); /* microsec */
 		} else {
 			double oldunow = unow;
-			int oldx = x, oldy = y;
-			ret = read_position_from_inputdev (&x, &y, &unow);
+			int oldx = x, oldy = y, oldz = z;
+			ret = read_position_from_inputdev (&x, &y, &z, &unow);
 
 			/* The input device issues events only when the position changed.
 			 * The analysis state needs to know how long the position remained
