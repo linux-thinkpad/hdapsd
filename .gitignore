@@ -11,7 +11,7 @@ config.*
 configure
 depcomp
 hdapsd
-hdapsd.o
+*.o
 install-sh
 missing
 stamp-h1
