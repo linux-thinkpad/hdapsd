@@ -44,6 +44,7 @@
 #include <getopt.h>
 #include <linux/input.h>
 #include <syslog.h>
+#include "input-helper.h"
 
 #define PID_FILE                "/var/run/hdapsd.pid"
 #define SYSFS_POSITION_FILE	    "/sys/devices/platform/hdaps/position"
@@ -672,7 +673,8 @@ int main (int argc, char** argv)
 
 	if (!poll_sysfs) {
 		if (!applemotion) {
-			hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY);
+			hdaps_input_fd = device_find_byphys("hdaps/input1");
+			/* hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
 				printlog(stdout,
 				        "WARNING: Cannot open hdaps position input file %s (%s). "
@@ -684,7 +686,8 @@ int main (int argc, char** argv)
 				poll_sysfs = 1;
 			}
 		} else {
-			hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY);
+			hdaps_input_fd = device_find_byname("Apple Motion Sensor");
+			/* hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
 				printlog(stdout, "No AMS input, joystick=1?");
 				poll_sysfs = 1;
