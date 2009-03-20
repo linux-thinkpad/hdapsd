@@ -28,6 +28,7 @@
  */
 
 #include "config.h"
+#include "hdapsd.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,44 +47,6 @@
 #include <syslog.h>
 #include "input-helper.h"
 
-#define PID_FILE                "/var/run/hdapsd.pid"
-#define SYSFS_POSITION_FILE	    "/sys/devices/platform/hdaps/position"
-#define MOUSE_ACTIVITY_FILE     "/sys/devices/platform/hdaps/keyboard_activity"
-#define KEYBD_ACTIVITY_FILE     "/sys/devices/platform/hdaps/mouse_activity"
-#define SAMPLING_RATE_FILE      "/sys/devices/platform/hdaps/sampling_rate"
-#define POSITION_INPUTDEV       "/dev/input/hdaps/accelerometer-event"
-#define AMS_POSITION_FILE	"/sys/devices/ams/current"
-#define AMS_POSITION_INPUTDEV	"/dev/input/event5"
-#define BUF_LEN                 40
-
-#define FREEZE_SECONDS          1    /* period to freeze disk */
-#define REFREEZE_SECONDS        0.1  /* period after which to re-freeze disk */
-#define FREEZE_EXTRA_SECONDS    4    /* additional timeout for kernel timer */
-#define DEFAULT_SAMPLING_RATE   50   /* default sampling frequency */
-#define SIGUSR1_SLEEP_SEC       8    /* how long to sleep upon SIGUSR1 */
-/* Magic threshold tweak factors, determined experimentally to make a
- * threshold of 10-20 behave reasonably.
- */
-#define VELOC_ADJUST            30.0
-#define ACCEL_ADJUST            (VELOC_ADJUST * 60)
-#define AVG_VELOC_ADJUST        3.0
-
-/* History depth for velocity average, in seconds */
-#define AVG_DEPTH_SEC           0.3
-
-/* Parameters for adaptive threshold */
-#define RECENT_PARK_SEC        3.0    /* How recent is "recently parked"? */
-#define THRESH_ADAPT_SEC       1.0    /* How often to (potentially) change
-                                       * the adaptive threshold?           */
-#define THRESH_INCREASE_FACTOR 1.1    /* Increase factor when recently
-                                       * parked but user is typing      */
-#define THRESH_DECREASE_FACTOR 0.9985 /* Decrease factor when not recently
-                                       * parked, per THRESH_ADAPT_SEC sec. */
-#define NEAR_THRESH_FACTOR     0.8    /* Fraction of threshold considered
-                                       * being near the threshold.       */
-
-/* Threshold for *continued* parking, as fraction of normal threshold */
-#define PARKED_THRESH_FACTOR   NEAR_THRESH_FACTOR /* >= NEAR_THRESH_FACTOR */
 
 static int verbose = 0;
 static int pause_now = 0;
@@ -96,12 +59,6 @@ static int dosyslog = 0;
 
 char pid_file[BUF_LEN] = "";
 int hdaps_input_fd = 0;
-
-struct list {
-	char name[BUF_LEN];
-	char protect_file[BUF_LEN];
-	struct list *next;
-};
 
 struct list *disklist = NULL;
 
@@ -165,11 +122,11 @@ static int slurp_file(const char* filename, char* buf)
 }
 
 /*
- * read_position_from_sysfs() - read the (x,y) position pair from hdaps via sysfs files
+ * read_position_from_hdaps() - read the (x,y) position pair from hdaps via sysfs files
  * This method is not recommended for frequent polling, since it causes unnecessary interrupts
  * and a phase difference between hdaps-to-EC polling vs. hdapsd-to-hdaps polling.
  */
-static int read_position_from_sysfs (int *x, int *y)
+static int read_position_from_hdaps (int *x, int *y)
 {
 	char buf[BUF_LEN];
 	int ret;
@@ -189,6 +146,21 @@ static int read_position_from_ams (int *x, int *y, int *z)
 		return ret;
 	return (sscanf (buf, "%d %d %d\n", x, y, z) != 3);
 }
+
+/*
+ * read_position_from_sysfs() - read the position either from HDAPS or from AMS
+ * depending on the given interface.
+ */
+static int read_position_from_sysfs (int interface, int *x, int *y, int *z)
+{
+	if (interface==INTERFACE_HDAPS)
+		return read_position_from_hdaps(x,y);
+	else if (interface==INTERFACE_AMS)
+		return read_position_from_ams(x,y,z);
+	return -1;
+}
+
+
 /*
  * read_int() - read an integer from a file
  */
@@ -230,11 +202,11 @@ static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 	while (1) {
 		len = read(hdaps_input_fd, &ev, sizeof(struct input_event));
 		if (len < 0) {
-			printlog(stderr, "ERROR: failed reading %s (%s).", POSITION_INPUTDEV, strerror(errno));
+			printlog(stderr, "ERROR: failed reading from input device: %s.", strerror(errno));
 			return len;
 		}
 		if (len < (int)sizeof(struct input_event)) {
-			printlog(stderr, "ERROR: short read from %s (%d bytes).", POSITION_INPUTDEV, len);
+			printlog(stderr, "ERROR: short read from input device (%d bytes).", len);
 			return -EIO;
 		}
 		switch (ev.type) {
@@ -584,6 +556,31 @@ void free_disk (struct list *disk) {
 }
 
 /*
+ * select_interface() - search for an interface we can read our position from
+ */
+int select_interface() {
+	int fd;
+	enum interfaces position_interface;
+
+	fd = open(SYSFS_POSITION_FILE, O_RDONLY);
+	if (fd<0) { /* opening hdaps file failed */
+		fd = open(AMS_POSITION_FILE, O_RDONLY);
+		if (fd<0) { /* opening ams failed too */
+			position_interface = INTERFACE_NONE;
+		}
+		else {
+			close(fd);
+			position_interface = INTERFACE_AMS;
+		}
+	}
+	else { /* yes, we are hdaps */
+		close(fd);
+		position_interface = INTERFACE_HDAPS;
+	}
+	return position_interface;
+}
+
+/*
  * main() - loop forever, reading the hdaps values and 
  *          parking/unparking as necessary
  */
@@ -593,8 +590,9 @@ int main (int argc, char** argv)
 	int c, park_now, protect_factor;
 	int x=0, y=0, z=0;
 	int fd, i, ret, threshold = 15, adaptive=0,
-	  pidfile = 0, parked = 0, applemotion=0;
+	  pidfile = 0, parked = 0;
 	double unow = 0, parked_utime = 0;
+	enum interfaces position_interface = INTERFACE_NONE;
 
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
 		protect_factor = 1000;
@@ -614,13 +612,12 @@ int main (int argc, char** argv)
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
 		{"syslog", no_argument, NULL, 'l'},
-		{"ams", no_argument, NULL, 'm'},
 		{NULL, 0, NULL, 0}
 	};
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlm", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhl", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -658,9 +655,6 @@ int main (int argc, char** argv)
 			case 'l':
 				dosyslog = 1;
 				break;
-			case 'm':
-				applemotion = 1;
-				break;
 			case 'h':
 			default:
 				usage();
@@ -671,25 +665,37 @@ int main (int argc, char** argv)
 	if (!threshold || disklist == NULL)
 		usage(argv);
 
+	printlog(stdout, "Starting "PACKAGE_NAME);
+
+	/* Let's see if we're on a ThinkPad or on an *Book */
+	position_interface = select_interface();
+
+	if (!position_interface) {
+		printlog(stdout, "Could not find a suitable interface");
+		return -1;
+	}
+	else
+		printlog(stdout, "Selected interface: %d", position_interface);
+
 	if (!poll_sysfs) {
-		if (!applemotion) {
+		if (position_interface == INTERFACE_HDAPS) {
 			hdaps_input_fd = device_find_byphys("hdaps/input1");
 			/* hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
 				printlog(stdout,
-				        "WARNING: Cannot open hdaps position input file %s (%s). "
-				        "You may be using an incompatible version of the hdaps module, "
-				        "or missing the required udev rule.\n"
+				        "WARNING: Could not find hdaps input device (%s). "
+				        "You may be using an incompatible version of the hdaps module. "
 				        "Falling back to reading the position from sysfs (uses more power).\n"
 				        "Use '-y' to silence this warning.",
-				        POSITION_INPUTDEV, strerror(errno));
+				        strerror(errno));
 				poll_sysfs = 1;
 			}
-		} else {
+		} else if (position_interface == INTERFACE_AMS){
 			hdaps_input_fd = device_find_byname("Apple Motion Sensor");
 			/* hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
-				printlog(stdout, "No AMS input, joystick=1?");
+				printlog(stdout,
+					"WARNING: Could not find AMS input device, do you need to set joystick=1?");
 				poll_sysfs = 1;
 			}
 		}
@@ -732,8 +738,6 @@ int main (int argc, char** argv)
 		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
 	}
 
-	printlog(stdout, "Starting "PACKAGE_NAME);
-
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	struct list *p = disklist;
@@ -755,23 +759,17 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	if (!applemotion)
-		ret = read_position_from_sysfs (&x, &y);
-	else
-		ret = read_position_from_ams (&x, &y, &z);
+	ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 	if (background)
 		for (i=0; ret && i < 100; ++i) {
 			usleep (100000);	/* 10 Hz */
-			if (!applemotion)
-				ret = read_position_from_sysfs (&x, &y);
-			else
-				ret = read_position_from_ams (&x, &y, &z);
+			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 		}
 	if (ret)
 		return 1;
 
     /* adapt to the driver's sampling rate */
-	if (!applemotion)
+	if (position_interface == INTERFACE_HDAPS)
 		sampling_rate = read_int(SAMPLING_RATE_FILE);
 	if (sampling_rate <= 0)
 		sampling_rate = DEFAULT_SAMPLING_RATE;
@@ -783,13 +781,9 @@ int main (int argc, char** argv)
 	signal(SIGTERM, SIGTERM_handler);
 
 	while (running) {
-		if (poll_sysfs && !applemotion) {
+		if (poll_sysfs) {
 			usleep (1000000/sampling_rate);
-			ret = read_position_from_sysfs (&x, &y);
-			unow = get_utime(); /* microsec */
-		} else if (poll_sysfs && applemotion) {
-			usleep (1000000/sampling_rate);
-			ret = read_position_from_ams (&x, &y, &z);
+			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 			unow = get_utime(); /* microsec */
 		} else {
 			double oldunow = unow;
@@ -865,4 +859,3 @@ int main (int argc, char** argv)
 	munlockall();
 	return ret;
 }
-
