@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #define PID_FILE                "/var/run/hdapsd.pid"
 #define SYSFS_POSITION_FILE	"/sys/devices/platform/hdaps/position"
 #define MOUSE_ACTIVITY_FILE     "/sys/devices/platform/hdaps/keyboard_activity"
@@ -44,7 +46,7 @@ enum interfaces {
 
 struct list {
 	char name[BUF_LEN];
-	char protect_file[BUF_LEN];
+	char protect_file[FILENAME_MAX];
 	struct list *next;
 };
 

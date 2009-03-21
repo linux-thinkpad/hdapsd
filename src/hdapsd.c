@@ -57,7 +57,7 @@ static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
 
-char pid_file[BUF_LEN] = "";
+char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
 
 struct list *disklist = NULL;
@@ -107,7 +107,7 @@ static int slurp_file(const char* filename, char* buf)
 		return fd;
 	}	
 
-	ret = read (fd, buf, BUF_LEN-1);
+	ret = read (fd, buf, sizeof(buf)-1);
 	if (ret < 0) {
 		printlog(stderr, "Could not read from %s: %s", filename, strerror(errno));
 	} else {
@@ -250,7 +250,7 @@ static int write_protect (const char *path, int val)
 	if (dry_run)
 		return 0;
 
-	snprintf(buf, BUF_LEN, "%d", val);
+	snprintf(buf, sizeof(buf), "%d", val);
 
 	fd = open (path, O_WRONLY);
 	if (fd < 0) {
@@ -509,11 +509,11 @@ int analyze(int x, int y, double unow, double base_threshold,
  */
 void add_disk (char* disk) {
 	struct utsname sysinfo;
-	char protect_file[BUF_LEN] = "";
+	char protect_file[FILENAME_MAX] = "";
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
-		snprintf(protect_file, BUF_LEN, "/sys/block/%s/device/unload_heads", disk);
+		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/device/unload_heads", disk);
 	else
-		snprintf(protect_file, BUF_LEN, "/sys/block/%s/queue/protect", disk);
+		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/queue/protect", disk);
 	
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
@@ -522,8 +522,8 @@ void add_disk (char* disk) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(disklist->name,disk,BUF_LEN);
-			strncpy(disklist->protect_file,protect_file,BUF_LEN);
+			strncpy(disklist->name,disk,sizeof(disklist->name));
+			strncpy(disklist->protect_file,protect_file,sizeof(disklist->protect_file));
 			disklist->next = NULL;
 		}
 	}
@@ -537,8 +537,8 @@ void add_disk (char* disk) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(p->next->name,disk,BUF_LEN);
-			strncpy(p->next->protect_file,protect_file,BUF_LEN);
+			strncpy(p->next->name,disk,sizeof(p->next->name));
+			strncpy(p->next->protect_file,protect_file,sizeof(p->next->protect_file));
 			p->next->next = NULL;
 		}
 	}
@@ -637,9 +637,9 @@ int main (int argc, char** argv)
 			case 'p':
 				pidfile = 1;
 				if (optarg == NULL) {
-					snprintf(pid_file, BUF_LEN, "%s", PID_FILE);
+					snprintf(pid_file, sizeof(pid_file), "%s", PID_FILE);
 				} else {
-					snprintf(pid_file, BUF_LEN, "%s", optarg);
+					snprintf(pid_file, sizeof(pid_file), "%s", optarg);
 				}
 				break;
 			case 't':
@@ -713,7 +713,7 @@ int main (int argc, char** argv)
 		daemon(0,0);
 		if (pidfile) {
 			char buf[BUF_LEN];
-			snprintf (buf, BUF_LEN, "%d\n", getpid());
+			snprintf (buf, sizeof(buf), "%d\n", getpid());
 			ret = write (fd, buf, strlen(buf));
 			if (ret < 0) {
 				printlog (stderr, "Could not write to pidfile %s", pid_file);
