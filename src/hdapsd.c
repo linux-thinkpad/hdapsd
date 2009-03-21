@@ -107,7 +107,7 @@ static int slurp_file(const char* filename, char* buf)
 		return fd;
 	}	
 
-	ret = read (fd, buf, sizeof(buf)-1);
+	ret = read (fd, buf, BUF_LEN-1);
 	if (ret < 0) {
 		printlog(stderr, "Could not read from %s: %s", filename, strerror(errno));
 	} else {
@@ -765,8 +765,10 @@ int main (int argc, char** argv)
 			usleep (100000);	/* 10 Hz */
 			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 		}
-	if (ret)
+	if (ret) {
+		printlog(stderr, "Could not read position from sysfs.");
 		return 1;
+	}
 
     /* adapt to the driver's sampling rate */
 	if (position_interface == INTERFACE_HDAPS)
