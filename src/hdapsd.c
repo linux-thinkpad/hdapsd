@@ -45,6 +45,7 @@
 #include <getopt.h>
 #include <linux/input.h>
 #include <syslog.h>
+#include <dirent.h>
 #include "input-helper.h"
 
 
@@ -582,6 +583,29 @@ int select_interface() {
 }
 
 /*
+ * autodetect_devices()
+ */
+int autodetect_devices() {
+	int num_devices = 0;
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir("/sys/block");
+	if (dp != NULL) {
+		while (ep = readdir(dp)) {
+			char path[FILENAME_MAX];
+			snprintf(path, sizeof(path), "/sys/block/%s/device/unload_heads", ep->d_name);
+			if (access(path, F_OK) == 0) {
+				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
+				add_disk(ep->d_name);
+				num_devices++;
+			}
+		}
+		(void)closedir(dp);
+	}
+	return num_devices;
+}
+
+/*
  * main() - loop forever, reading the hdaps values and 
  *          parking/unparking as necessary
  */
@@ -663,7 +687,13 @@ int main (int argc, char** argv)
 		}
 	}
 	
-	if (!threshold || disklist == NULL)
+	if (disklist == NULL) {
+		printlog(stdout, "WARNING: You did not supply any devices to protect, trying autodetection.");
+		if (autodetect_devices() < 1)
+			printlog(stderr, "Could not detect any devices.");
+	}
+
+	if (disklist == NULL)
 		usage(argv);
 
 	printlog(stdout, "Starting "PACKAGE_NAME);

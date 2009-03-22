@@ -15,7 +15,7 @@ AC_PROG_CC
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h stdlib.h string.h sys/time.h unistd.h syslog.h linux/input.h])
+AC_CHECK_HEADERS([fcntl.h stdlib.h string.h sys/time.h unistd.h syslog.h linux/input.h dirent.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

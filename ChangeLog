@@ -2,6 +2,7 @@ hdapsd 2009xxxx:
 	Evgeni Golov <sargentd@die-welt.net>
 	* Support for the Apple Motion Sensor.
 	* Udev rules obsolete, we can find the device on our own now.
+	* Autodetect drives with kernel 2.6.28+.
 
 hdapsd 20090129:
 	Evgeni Golov <sargentd@die-welt.net>:
