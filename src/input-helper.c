@@ -44,8 +44,10 @@ int device_find_byphys(char *phys) {
 		fd = device_open(i);
 		if (fd>0) {
 		        rc = ioctl(fd,EVIOCGPHYS(sizeof(buf)),buf);
-			if (rc >= 0 && strcmp(phys, buf)==0)
-				return fd;
+			if (rc >= 0 && strcmp(phys, buf)==0) {
+				close(fd);
+				return i;
+			}
 		}
 		close(fd);
 	}
@@ -60,8 +62,10 @@ int device_find_byname(char *name) {
 		fd = device_open(i);
 		if (fd>0) {
 		        rc = ioctl(fd,EVIOCGNAME(sizeof(buf)),buf);
-			if (rc >= 0 && strcmp(name, buf)==0)
-				return fd;
+			if (rc >= 0 && strcmp(name, buf)==0) {
+				close(fd);
+				return i;
+			}
 		}
 		close(fd);
 	}

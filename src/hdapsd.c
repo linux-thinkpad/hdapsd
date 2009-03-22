@@ -59,6 +59,7 @@ static int dosyslog = 0;
 
 char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
+int hdaps_input_nr = -1;
 
 struct list *disklist = NULL;
 
@@ -202,11 +203,11 @@ static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 	while (1) {
 		len = read(hdaps_input_fd, &ev, sizeof(struct input_event));
 		if (len < 0) {
-			printlog(stderr, "ERROR: failed reading from input device: %s.", strerror(errno));
+			printlog(stderr, "ERROR: failed reading from input device: /dev/input/event%d  (%s).", hdaps_input_nr, strerror(errno));
 			return len;
 		}
 		if (len < (int)sizeof(struct input_event)) {
-			printlog(stderr, "ERROR: short read from input device (%d bytes).", len);
+			printlog(stderr, "ERROR: short read from input device: /dev/input/event%d (%d bytes).", hdaps_input_nr, len);
 			return -EIO;
 		}
 		switch (ev.type) {
@@ -679,7 +680,8 @@ int main (int argc, char** argv)
 
 	if (!poll_sysfs) {
 		if (position_interface == INTERFACE_HDAPS) {
-			hdaps_input_fd = device_find_byphys("hdaps/input1");
+			hdaps_input_nr = device_find_byphys("hdaps/input1");
+			hdaps_input_fd = device_open(hdaps_input_nr);
 			/* hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
 				printlog(stdout,
@@ -690,13 +692,20 @@ int main (int argc, char** argv)
 				        strerror(errno));
 				poll_sysfs = 1;
 			}
+			else {
+				printlog(stdout, "Selected HDAPS input device /dev/input/event%d", hdaps_input_nr);
+			}
 		} else if (position_interface == INTERFACE_AMS){
-			hdaps_input_fd = device_find_byname("Apple Motion Sensor");
+			hdaps_input_nr = device_find_byname("Apple Motion Sensor");
+			hdaps_input_fd = device_open(hdaps_input_nr);
 			/* hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd<0) {
 				printlog(stdout,
 					"WARNING: Could not find AMS input device, do you need to set joystick=1?");
 				poll_sysfs = 1;
+			}
+			else {
+				printlog(stdout, "Selected AMS input device /dev/input/event%d", hdaps_input_nr);
 			}
 		}
 	}
