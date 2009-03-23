@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "hdapsd.h"
+#include "input-helper.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,6 @@
 #include <linux/input.h>
 #include <syslog.h>
 #include <dirent.h>
-#include "input-helper.h"
 
 
 static int verbose = 0;
@@ -63,7 +63,7 @@ int hdaps_input_fd = 0;
 int hdaps_input_nr = -1;
 
 struct list *disklist = NULL;
-enum kernel kernel_interface=UNLOAD_HEADS;
+enum kernel kernel_interface = UNLOAD_HEADS;
 
 /*
  * printlog (stream, fmt) - print the formatted message to syslog
@@ -156,9 +156,9 @@ static int read_position_from_ams (int *x, int *y, int *z)
  */
 static int read_position_from_sysfs (int interface, int *x, int *y, int *z)
 {
-	if (interface==INTERFACE_HDAPS)
+	if (interface == INTERFACE_HDAPS)
 		return read_position_from_hdaps(x,y);
-	else if (interface==INTERFACE_AMS)
+	else if (interface == INTERFACE_AMS)
 		return read_position_from_ams(x,y,z);
 	return -1;
 }
@@ -183,9 +183,9 @@ static int read_int (const char* filename)
  */
 static int get_km_activity()
 {
-	if (read_int(MOUSE_ACTIVITY_FILE)==1)
+	if (read_int(MOUSE_ACTIVITY_FILE) == 1)
 		return 1;
-	if (read_int(KEYBD_ACTIVITY_FILE)==1)
+	if (read_int(KEYBD_ACTIVITY_FILE) == 1)
 		return 1;
 	return 0;
 }
@@ -339,7 +339,7 @@ void usage()
 	printf("                                     accelerometer.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("   -f --force                        Force unloading heads, even if kernel thinks\n");
-	printf("                                     different (on pre ATA7 drives).\n");
+	printf("                                     differently (on pre ATA7 drives).\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
 	printf("   -h --help                         Display this message and exit.\n");
@@ -514,23 +514,40 @@ int analyze(int x, int y, double unow, double base_threshold,
  */
 void add_disk (char* disk, int forceadd) {
 	char protect_file[FILENAME_MAX] = "";
-	if (kernel_interface==UNLOAD_HEADS)
+	char protect_method[FILENAME_MAX] = "";
+	if (kernel_interface == UNLOAD_HEADS)
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/device/unload_heads", disk);
-	else
+	else {
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/queue/protect", disk);
+		snprintf(protect_method, sizeof(protect_method), "/sys/block/%s/queue/protect_method", disk);
+	}
 
-	if (forceadd && kernel_interface==UNLOAD_HEADS) {
+	if (forceadd) {
 		int fd;
-		fd = open(protect_file, O_RDWR);
-		if (fd>0) {
-			if ((write(fd, "-1", 2)) == -1)
-				printlog(stderr, "Could not force-enable UNLOAD feature for %s", disk);
+		if (kernel_interface == UNLOAD_HEADS) {
+			fd = open (protect_file, O_RDWR);
+			if (fd > 0) {
+				if ((write(fd, "-1", 2)) == -1)
+					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
+				else
+					printlog(stdout, "Force-enabled UNLOAD for %s", disk);
+				close(fd);
+			}
 			else
-				printlog(stdout, "Force-enabled UNLOAD for %s", disk);
-			close(fd);
+				printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_file);
 		}
-		else
-			printlog(stderr, "Could not open %s for force-enabling UNLOAD feature", protect_file);
+		else {
+			fd = open (protect_method, O_RDWR);
+			if (fd > 0) {
+				if ((write(fd, "unload", 6)) == -1)
+					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
+				else
+					printlog(stdout, "Force-enabled UNLOAD for %s", disk);
+				close(fd);
+			}
+			else
+				printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_method);
+		}
 	}
 	
 	if (disklist == NULL) {
@@ -540,8 +557,8 @@ void add_disk (char* disk, int forceadd) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(disklist->name,disk,sizeof(disklist->name));
-			strncpy(disklist->protect_file,protect_file,sizeof(disklist->protect_file));
+			strncpy(disklist->name, disk, sizeof(disklist->name));
+			strncpy(disklist->protect_file, protect_file, sizeof(disklist->protect_file));
 			disklist->next = NULL;
 		}
 	}
@@ -555,8 +572,8 @@ void add_disk (char* disk, int forceadd) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			strncpy(p->next->name,disk,sizeof(p->next->name));
-			strncpy(p->next->protect_file,protect_file,sizeof(p->next->protect_file));
+			strncpy(p->next->name, disk, sizeof(p->next->name));
+			strncpy(p->next->protect_file, protect_file, sizeof(p->next->protect_file));
 			p->next->next = NULL;
 		}
 	}
@@ -580,10 +597,10 @@ int select_interface() {
 	int fd;
 	enum interfaces position_interface;
 
-	fd = open(SYSFS_POSITION_FILE, O_RDONLY);
-	if (fd<0) { /* opening hdaps file failed */
+	fd = open (SYSFS_POSITION_FILE, O_RDONLY);
+	if (fd < 0) { /* opening hdaps file failed */
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
-		if (fd<0) { /* opening ams failed too */
+		if (fd < 0) { /* opening ams failed too */
 			position_interface = INTERFACE_NONE;
 		}
 		else {
@@ -617,7 +634,7 @@ int autodetect_devices() {
 			else
 				snprintf(path, sizeof(path), "/sys/block/%s/queue/protect", ep->d_name);
 				
-			if (access(path, F_OK) == 0 && read_int(removable)==0 && read_int(path)>=0) {
+			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
 				add_disk(ep->d_name, 0);
 				num_devices++;
@@ -637,18 +654,18 @@ int main (int argc, char** argv)
 	struct utsname sysinfo;
 	int c, park_now, protect_factor;
 	int x=0, y=0, z=0;
-	int fd, i, ret, threshold = 15, adaptive=0,
-	  pidfile = 0, parked = 0, forceadd=0;
+	int fd, i, ret, threshold = 15, adaptive = 0,
+	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
 	enum interfaces position_interface = INTERFACE_NONE;
 
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0) {
 		protect_factor = 1000;
-		kernel_interface=UNLOAD_HEADS;
+		kernel_interface = UNLOAD_HEADS;
 	}
 	else {
 		protect_factor = 1;
-		kernel_interface=PROTECT;
+		kernel_interface = PROTECT;
 	}
 
 	struct option longopts[] =
@@ -744,7 +761,7 @@ int main (int argc, char** argv)
 			hdaps_input_nr = device_find_byphys("hdaps/input1");
 			hdaps_input_fd = device_open(hdaps_input_nr);
 			/* hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY); */
-			if (hdaps_input_fd<0) {
+			if (hdaps_input_fd < 0) {
 				printlog(stdout,
 				        "WARNING: Could not find hdaps input device (%s). "
 				        "You may be using an incompatible version of the hdaps module. "
@@ -756,11 +773,11 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected HDAPS input device /dev/input/event%d", hdaps_input_nr);
 			}
-		} else if (position_interface == INTERFACE_AMS){
+		} else if (position_interface == INTERFACE_AMS) {
 			hdaps_input_nr = device_find_byname("Apple Motion Sensor");
 			hdaps_input_fd = device_open(hdaps_input_nr);
 			/* hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY); */
-			if (hdaps_input_fd<0) {
+			if (hdaps_input_fd < 0) {
 				printlog(stdout,
 					"WARNING: Could not find AMS input device, do you need to set joystick=1?");
 				poll_sysfs = 1;

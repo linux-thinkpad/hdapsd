@@ -30,7 +30,7 @@ int device_open(int id) {
 
 	snprintf(node, 32, "/dev/input/event%d", id);
 	fd = open(node,O_RDONLY);
-	if (fd<0)
+	if (fd < 0)
 		return -1;
 
 	return fd;
@@ -42,9 +42,9 @@ int device_find_byphys(char *phys) {
 
 	for (i = 0; i < 32; i++) {
 		fd = device_open(i);
-		if (fd>0) {
+		if (fd > 0) {
 		        rc = ioctl(fd,EVIOCGPHYS(sizeof(buf)),buf);
-			if (rc >= 0 && strcmp(phys, buf)==0) {
+			if (rc >= 0 && strcmp(phys, buf) == 0) {
 				close(fd);
 				return i;
 			}
@@ -60,9 +60,9 @@ int device_find_byname(char *name) {
 
 	for (i = 0; i < 32; i++) {
 		fd = device_open(i);
-		if (fd>0) {
+		if (fd > 0) {
 		        rc = ioctl(fd,EVIOCGNAME(sizeof(buf)),buf);
-			if (rc >= 0 && strcmp(name, buf)==0) {
+			if (rc >= 0 && strcmp(name, buf) == 0) {
 				close(fd);
 				return i;
 			}
