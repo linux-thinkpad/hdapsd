@@ -340,6 +340,8 @@ void usage()
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("   -f --force                        Force unloading heads, even if kernel thinks\n");
 	printf("                                     differently (on pre ATA7 drives).\n");
+	printf("                                     This only works when adding devices by hand (-d)\n");
+	printf("                                     and must be set BEFORE -d.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
 	printf("   -h --help                         Display this message and exit.\n");
@@ -530,7 +532,7 @@ void add_disk (char* disk, int forceadd) {
 				if ((write(fd, "-1", 2)) == -1)
 					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
 				else
-					printlog(stdout, "Force-enabled UNLOAD for %s", disk);
+					printlog(stdout, "Forcely enabled UNLOAD for %s", disk);
 				close(fd);
 			}
 			else
@@ -542,7 +544,7 @@ void add_disk (char* disk, int forceadd) {
 				if ((write(fd, "unload", 6)) == -1)
 					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
 				else
-					printlog(stdout, "Force-enabled UNLOAD for %s", disk);
+					printlog(stdout, "Forcely enabled UNLOAD for %s", disk);
 				close(fd);
 			}
 			else
