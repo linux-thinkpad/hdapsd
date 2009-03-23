@@ -512,12 +512,24 @@ int analyze(int x, int y, double unow, double base_threshold,
 /*
  * add_disk (disk) - add the given disk to the global disklist
  */
-void add_disk (char* disk) {
+void add_disk (char* disk, int forceadd) {
 	char protect_file[FILENAME_MAX] = "";
 	if (kernel_interface==UNLOAD_HEADS)
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/device/unload_heads", disk);
 	else
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/queue/protect", disk);
+
+	if (forceadd && kernel_interface==UNLOAD_HEADS) {
+		int fd;
+		fd = open(protect_file, O_RDWR);
+		if (fd>0) {
+			if ((write(fd, "-1", 2)) == -1)
+				printlog(stderr, "Could not force-enable UNLOAD feature for %s", disk);
+			close(fd);
+		}
+		else
+			printlog(stderr, "Could not open %s for force-enabling UNLOAD feature", protect_file);
+	}
 	
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
@@ -605,7 +617,7 @@ int autodetect_devices() {
 				
 			if (access(path, F_OK) == 0 && read_int(removable)==0 && read_int(path)>=0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
-				add_disk(ep->d_name);
+				add_disk(ep->d_name, 0);
 				num_devices++;
 			}
 		}
@@ -659,7 +671,7 @@ int main (int argc, char** argv)
 	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
-				add_disk(optarg);
+				add_disk(optarg, forceadd);
 				break;
 			case 's':
 				threshold = atoi(optarg);
