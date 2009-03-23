@@ -338,6 +338,8 @@ void usage()
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to\n");
 	printf("                                     accelerometer.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
+	printf("   -f --force                        Force unloading heads, even if kernel thinks\n");
+	printf("                                     different (on pre ATA7 drives).\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
 	printf("   -h --help                         Display this message and exit.\n");
@@ -622,7 +624,7 @@ int main (int argc, char** argv)
 	int c, park_now, protect_factor;
 	int x=0, y=0, z=0;
 	int fd, i, ret, threshold = 15, adaptive=0,
-	  pidfile = 0, parked = 0;
+	  pidfile = 0, parked = 0, forceadd=0;
 	double unow = 0, parked_utime = 0;
 	enum interfaces position_interface = INTERFACE_NONE;
 
@@ -648,12 +650,13 @@ int main (int argc, char** argv)
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
 		{"syslog", no_argument, NULL, 'l'},
+		{"force", no_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
 	};
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhl", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -690,6 +693,9 @@ int main (int argc, char** argv)
 				break;
 			case 'l':
 				dosyslog = 1;
+				break;
+			case 'f':
+				forceadd = 1;
 				break;
 			case 'h':
 			default:
