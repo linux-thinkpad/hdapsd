@@ -525,6 +525,8 @@ void add_disk (char* disk, int forceadd) {
 		if (fd>0) {
 			if ((write(fd, "-1", 2)) == -1)
 				printlog(stderr, "Could not force-enable UNLOAD feature for %s", disk);
+			else
+				printlog(stdout, "Force-enabled UNLOAD for %s", disk);
 			close(fd);
 		}
 		else
