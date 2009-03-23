@@ -593,12 +593,15 @@ int autodetect_devices() {
 	if (dp != NULL) {
 		while (ep = readdir(dp)) {
 			char path[FILENAME_MAX];
+			char removable[FILENAME_MAX];
+			snprintf(removable, sizeof(removable), "/sys/block/%s/removable", ep->d_name);
+
 			if (kernel_interface==UNLOAD_HEADS)
 				snprintf(path, sizeof(path), "/sys/block/%s/device/unload_heads", ep->d_name);
 			else
 				snprintf(path, sizeof(path), "/sys/block/%s/queue/protect", ep->d_name);
 				
-			if (access(path, F_OK) == 0) {
+			if (access(path, F_OK) == 0 && read_int(removable)==0 && read_int(path)>=0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
 				add_disk(ep->d_name);
 				num_devices++;
