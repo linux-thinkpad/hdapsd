@@ -44,6 +44,11 @@ enum interfaces {
 	INTERFACE_AMS,
 };
 
+enum kernel {
+	PROTECT,
+	UNLOAD_HEADS,
+};
+
 struct list {
 	char name[BUF_LEN];
 	char protect_file[FILENAME_MAX];

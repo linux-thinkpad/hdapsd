@@ -63,6 +63,7 @@ int hdaps_input_fd = 0;
 int hdaps_input_nr = -1;
 
 struct list *disklist = NULL;
+enum kernel kernel_interface=UNLOAD_HEADS;
 
 /*
  * printlog (stream, fmt) - print the formatted message to syslog
@@ -510,9 +511,8 @@ int analyze(int x, int y, double unow, double base_threshold,
  * add_disk (disk) - add the given disk to the global disklist
  */
 void add_disk (char* disk) {
-	struct utsname sysinfo;
 	char protect_file[FILENAME_MAX] = "";
-	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
+	if (kernel_interface==UNLOAD_HEADS)
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/device/unload_heads", disk);
 	else
 		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/queue/protect", disk);
@@ -586,7 +586,6 @@ int select_interface() {
  * autodetect_devices()
  */
 int autodetect_devices() {
-	struct utsname sysinfo;
 	int num_devices = 0;
 	DIR *dp;
 	struct dirent *ep;
@@ -594,7 +593,7 @@ int autodetect_devices() {
 	if (dp != NULL) {
 		while (ep = readdir(dp)) {
 			char path[FILENAME_MAX];
-			if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
+			if (kernel_interface==UNLOAD_HEADS)
 				snprintf(path, sizeof(path), "/sys/block/%s/device/unload_heads", ep->d_name);
 			else
 				snprintf(path, sizeof(path), "/sys/block/%s/queue/protect", ep->d_name);
@@ -624,10 +623,14 @@ int main (int argc, char** argv)
 	double unow = 0, parked_utime = 0;
 	enum interfaces position_interface = INTERFACE_NONE;
 
-	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0)
+	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0) {
 		protect_factor = 1000;
-	else
+		kernel_interface=UNLOAD_HEADS;
+	}
+	else {
 		protect_factor = 1;
+		kernel_interface=PROTECT;
+	}
 
 	struct option longopts[] =
 	{
