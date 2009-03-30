@@ -595,9 +595,20 @@ void free_disk (struct list *disk) {
 /*
  * select_interface() - search for an interface we can read our position from
  */
-int select_interface() {
+int select_interface(int modprobe) {
 	int fd;
 	enum interfaces position_interface;
+
+	char *modules[] = {"hdaps_ec", "hdaps", "ams"};
+	int mod_index;
+	char command[64];
+
+	if (modprobe) {
+		for (mod_index=0; mod_index<sizeof(modules)/sizeof(modules[0]); mod_index++) {
+			snprintf(command, sizeof(command), "modprobe %s 1>/dev/null 2>/dev/null", modules[mod_index]);
+			system(command);
+		}
+	}
 
 	fd = open (SYSFS_POSITION_FILE, O_RDONLY);
 	if (fd < 0) { /* opening hdaps file failed */
@@ -749,7 +760,9 @@ int main (int argc, char** argv)
 	printlog(stdout, "Starting "PACKAGE_NAME);
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
-	position_interface = select_interface();
+	position_interface = select_interface(0);
+	if (!position_interface)
+		position_interface = select_interface(1);
 
 	if (!position_interface) {
 		printlog(stdout, "Could not find a suitable interface");
