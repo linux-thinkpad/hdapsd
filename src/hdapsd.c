@@ -69,7 +69,6 @@ enum kernel kernel_interface = UNLOAD_HEADS;
  * printlog (stream, fmt) - print the formatted message to syslog
  *                          or to the defined stream
  */
-
 void printlog (FILE *stream, const char *fmt, ...)
 {
 	time_t now;
@@ -101,7 +100,7 @@ void printlog (FILE *stream, const char *fmt, ...)
  * If I were king--and I will be one day--I would have made sysfs files
  * nonseekable and only able to return full-size reads.
  */
-static int slurp_file(const char* filename, char* buf)
+static int slurp_file (const char* filename, char* buf)
 {
 	int ret;
 	int fd = open (filename, O_RDONLY);
@@ -181,7 +180,7 @@ static int read_int (const char* filename)
 /*
  * get_km_activity() - returns 1 if there is keyboard or mouse activity
  */
-static int get_km_activity()
+static int get_km_activity ()
 {
 	if (read_int(MOUSE_ACTIVITY_FILE) == 1)
 		return 1;
@@ -189,7 +188,6 @@ static int get_km_activity()
 		return 1;
 	return 0;
 }
-
 
 /*
  * read_position_from_inputdev() - read the (x,y,z) position pair and time from hdaps
@@ -287,15 +285,19 @@ double get_utime (void)
 	return tv.tv_sec + tv.tv_usec/1000000.0;
 }
 
-/* Handler for SIGUSR1, sleeps for a few seconds. Useful when suspending laptop. */
-void SIGUSR1_handler(int sig)
+/* 
+ * SIGUSR1_handler - Handler for SIGUSR1, sleeps for a few seconds. Useful when suspending laptop.
+ */
+void SIGUSR1_handler (int sig)
 {
 	signal(SIGUSR1, SIGUSR1_handler);
 	pause_now=1;
 }
 
-/* Handler for SIGTERM, deletes the pidfile and exits. */
-void SIGTERM_handler(int sig)
+/*
+ * SIGTERM_handler - Handler for SIGTERM, deletes the pidfile and exits.
+ */
+void SIGTERM_handler (int sig)
 {
 	signal(SIGTERM, SIGTERM_handler);
 	running = 0;
@@ -304,7 +306,7 @@ void SIGTERM_handler(int sig)
 /*
  * version() - display version information and exit
  */
-void version()
+void version ()
 {
 	printf(PACKAGE_STRING"\n");
 	exit(0);
@@ -313,7 +315,7 @@ void version()
 /*
  * usage() - display usage instructions and exit 
  */
-void usage()
+void usage ()
 {
 	printf("Usage: "PACKAGE_NAME" [OPTIONS]\n");
 	printf("\n");
@@ -356,8 +358,8 @@ void usage()
 /*
  * check_thresh() - compare a value to the threshold
  */
-void check_thresh(double val_sqr, double thresh, int* above, int* near,
-                 char* reason_out, char reason_mark)
+void check_thresh (double val_sqr, double thresh, int* above, int* near,
+                   char* reason_out, char reason_mark)
 {
 	if (val_sqr > thresh*thresh*NEAR_THRESH_FACTOR*NEAR_THRESH_FACTOR) {
 		*near = 1;
@@ -385,9 +387,8 @@ void check_thresh(double val_sqr, double thresh, int* above, int* near,
  * adaptive threshold. The adaptive threshold slowly decreases back to the
  * base threshold when no value approaches it.
  */
-
-int analyze(int x, int y, double unow, double base_threshold, 
-            int adaptive, int parked) 
+int analyze (int x, int y, double unow, double base_threshold, 
+             int adaptive, int parked) 
 {
 	static int x_last = 0, y_last = 0;
 	static double unow_last = 0, x_veloc_last = 0, y_veloc_last = 0;
@@ -514,7 +515,8 @@ int analyze(int x, int y, double unow, double base_threshold,
 /*
  * add_disk (disk) - add the given disk to the global disklist
  */
-void add_disk (char* disk, int forceadd) {
+void add_disk (char* disk, int forceadd)
+{
 	char protect_file[FILENAME_MAX] = "";
 	char protect_method[FILENAME_MAX] = "";
 	if (kernel_interface == UNLOAD_HEADS)
@@ -584,7 +586,8 @@ void add_disk (char* disk, int forceadd) {
 /*
  * free_disk (disk) - free the allocated memory
  */
-void free_disk (struct list *disk) {
+void free_disk (struct list *disk)
+{
 	if (disk != NULL) {
 		if (disk->next != NULL)
 			free_disk(disk->next);
@@ -595,7 +598,8 @@ void free_disk (struct list *disk) {
 /*
  * select_interface() - search for an interface we can read our position from
  */
-int select_interface(int modprobe) {
+int select_interface (int modprobe)
+{
 	int fd;
 	enum interfaces position_interface;
 
@@ -631,7 +635,8 @@ int select_interface(int modprobe) {
 /*
  * autodetect_devices()
  */
-int autodetect_devices() {
+int autodetect_devices ()
+{
 	int num_devices = 0;
 	DIR *dp;
 	struct dirent *ep;
