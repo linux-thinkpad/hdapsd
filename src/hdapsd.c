@@ -133,7 +133,7 @@ static int read_position_from_hdaps (int *x, int *y)
 {
 	char buf[BUF_LEN];
 	int ret;
-	if ((ret = slurp_file(SYSFS_POSITION_FILE, buf)))
+	if ((ret = slurp_file(HDAPS_POSITION_FILE, buf)))
 		return ret;
 	return (sscanf (buf, "(%d,%d)\n", x, y) != 2);
 }
@@ -610,7 +610,7 @@ int select_interface(int modprobe) {
 		}
 	}
 
-	fd = open (SYSFS_POSITION_FILE, O_RDONLY);
+	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
 	if (fd < 0) { /* opening hdaps file failed */
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
 		if (fd < 0) { /* opening ams failed too */

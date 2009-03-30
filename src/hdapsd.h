@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #define PID_FILE                "/var/run/hdapsd.pid"
-#define SYSFS_POSITION_FILE	"/sys/devices/platform/hdaps/position"
+#define HDAPS_POSITION_FILE	"/sys/devices/platform/hdaps/position"
 #define MOUSE_ACTIVITY_FILE     "/sys/devices/platform/hdaps/keyboard_activity"
 #define KEYBD_ACTIVITY_FILE     "/sys/devices/platform/hdaps/mouse_activity"
 #define SAMPLING_RATE_FILE      "/sys/devices/platform/hdaps/sampling_rate"
