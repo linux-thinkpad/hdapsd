@@ -2,13 +2,15 @@
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
-.B hdapsd \-d \fI<device>\fR [\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
+.B hdapsd \fR[\fI\-f\fR|\fI\-d <device>\fR|\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
 .SH OPTIONS
-.SS "Required options:"
 .TP
 \fB\-d\fR \fB\-\-device=\fR\fI<device>\fR
 <device> is likely to be hda or sda. Can be given multiple times to protect multiple devices.
-.SS "Additional options:"
+.TP
+\fB\-f\fR \fB\-\-force\fR
+Force unloading heads, even if kernel thinks different (on pre ATA7 drives).
+This only works when adding devices by hand (-d) and must be set BEFORE -d.
 .TP
 \fB\-s\fR \fB\-\-sensitivity=\fR\fI<sensitivity>\fR
 How sensitive hdapsd should be to movements.
@@ -35,9 +37,6 @@ Force use of sysfs interface to accelerometer.
 .TP
 \fB\-l\fR \fB\-\-syslog\fR
 Log to syslog instead of stdout/stderr.
-.TP
-\fB\-f\fR \fB\-\-force\fR
-Force unloading heads, even if kernel thinks different (on pre ATA7 drives). This only works when adding devices by hand (-d) and must be set BEFORE -d.
 .TP
 \fB\-V\fR \fB\-\-version\fR
 Display version information and exit.

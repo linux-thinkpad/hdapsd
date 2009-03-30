@@ -2,7 +2,7 @@ hdapsd - Hard Drive Active Protection System Daemon
 ===================================================
 
 This is a disk protection user-space daemon. It monitors the acceleration
-values through the HDAPS interface and automatically initiates disk head
+values through the HDAPS/AMS interfaces and automatically initiates disk head
 parking if a fall or sliding of the laptop is detected.
 
 1. Compilation
@@ -13,7 +13,7 @@ make install
 
 2. Usage
 --------
-hdapsd -d <your-drive> -s 15
+hdapsd (it will try to autodetect everything itself)
 for more options, please read man hdapsd
 
 3. Compatibility
@@ -25,6 +25,7 @@ IDLE_IMMEDIATE is present in mainline.
        support ATA-6 only but do IDLE_IMMEDIATE fine. For those you
        need to force the interface with:
        echo -1 > /sys/block/$DISK/device/unload_heads
+   OR: Call hdapsd like this: hdapsd -f -d $DISK
 
 For kernels <2.6.28, please have a look at
 http://www.thinkwiki.org/wiki/HDAPS#Kernel_patch
