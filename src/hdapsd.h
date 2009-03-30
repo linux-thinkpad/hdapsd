@@ -44,6 +44,8 @@ enum interfaces {
 	INTERFACE_AMS,
 };
 
+char *interface_names[] = {"none", "HDAPS", "AMS"};
+
 enum kernel {
 	PROTECT,
 	UNLOAD_HEADS,

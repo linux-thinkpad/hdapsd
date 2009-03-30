@@ -769,7 +769,7 @@ int main (int argc, char** argv)
 		return -1;
 	}
 	else
-		printlog(stdout, "Selected interface: %d", position_interface);
+		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
 
 	if (!poll_sysfs) {
 		if (position_interface == INTERFACE_HDAPS) {
