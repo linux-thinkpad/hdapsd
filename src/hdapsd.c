@@ -291,7 +291,7 @@ double get_utime (void)
 void SIGUSR1_handler (int sig)
 {
 	signal(SIGUSR1, SIGUSR1_handler);
-	pause_now=1;
+	pause_now = 1;
 }
 
 /*
@@ -402,7 +402,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 	double threshold; /* transient threshold for this iteration */
 	char reason[4]; /* "which threshold reached?" string for verbose */
 	int recently_near_thresh;
-	int above=0, near=0; /* above threshold, near threshold */
+	int above = 0, near = 0; /* above threshold, near threshold */
 
 	/* Adaptive threshold adjustment  */
 	if (adaptive_threshold<0) /* first invocation */
@@ -605,7 +605,7 @@ int select_interface (int modprobe)
 	char command[64];
 
 	if (modprobe) {
-		for (mod_index=0; mod_index<sizeof(modules)/sizeof(modules[0]); mod_index++) {
+		for (mod_index = 0; mod_index < sizeof(modules)/sizeof(modules[0]); mod_index++) {
 			snprintf(command, sizeof(command), "modprobe %s 1>/dev/null 2>/dev/null", modules[mod_index]);
 			system(command);
 		}
@@ -644,7 +644,7 @@ int autodetect_devices ()
 			char removable[FILENAME_MAX];
 			snprintf(removable, sizeof(removable), "/sys/block/%s/removable", ep->d_name);
 
-			if (kernel_interface==UNLOAD_HEADS)
+			if (kernel_interface == UNLOAD_HEADS)
 				snprintf(path, sizeof(path), "/sys/block/%s/device/unload_heads", ep->d_name);
 			else
 				snprintf(path, sizeof(path), "/sys/block/%s/queue/protect", ep->d_name);
@@ -668,7 +668,7 @@ int main (int argc, char** argv)
 {
 	struct utsname sysinfo;
 	int c, park_now, protect_factor;
-	int x=0, y=0, z=0;
+	int x = 0, y = 0, z = 0;
 	int fd, i, ret, threshold = 15, adaptive = 0,
 	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
@@ -848,7 +848,7 @@ int main (int argc, char** argv)
 	while (p != NULL) {
 		fd = open (p->protect_file, O_RDWR);
 		if (background)
-			for (i=0; fd < 0 && i < 100; ++i) {
+			for (i = 0; fd < 0 && i < 100; ++i) {
 				usleep (100000);	/* 10 Hz */
 				fd = open (p->protect_file, O_RDWR);
 			}
@@ -865,7 +865,7 @@ int main (int argc, char** argv)
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 	if (background)
-		for (i=0; ret && i < 100; ++i) {
+		for (i = 0; ret && i < 100; ++i) {
 			usleep (100000);	/* 10 Hz */
 			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
 		}
@@ -949,7 +949,7 @@ int main (int argc, char** argv)
 				printlog(stdout, "un-parking");
 			}
 			while (pause_now) {
-				pause_now=0;
+				pause_now = 0;
 				printlog(stdout, "pausing for %d seconds", SIGUSR1_SLEEP_SEC);
 				sleep(SIGUSR1_SLEEP_SEC);
 			}
