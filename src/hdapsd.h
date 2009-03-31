@@ -6,6 +6,11 @@
 #define KEYBD_ACTIVITY_FILE     "/sys/devices/platform/hdaps/mouse_activity"
 #define SAMPLING_RATE_FILE      "/sys/devices/platform/hdaps/sampling_rate"
 #define AMS_POSITION_FILE	"/sys/devices/ams/current"
+#define SYSFS_BLOCK		"/sys/block"
+#define REMOVABLE_PATH(d)	SYSFS_BLOCK"/"#d"/removable"
+#define UNLOAD_HEADS_PATH(d)	SYSFS_BLOCK"/"#d"/device/unload_heads"
+#define QUEUE_PROTECT_PATH(d)	SYSFS_BLOCK"/"#d"/queue/protect"
+#define QUEUE_METHOD_PATH(d)	SYSFS_BLOCK"/"#d"/queue/protect_method"
 #define BUF_LEN                 40
 
 #define FREEZE_SECONDS          1    /* period to freeze disk */

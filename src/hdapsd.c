@@ -64,6 +64,7 @@ int hdaps_input_nr = -1;
 
 struct list *disklist = NULL;
 enum kernel kernel_interface = UNLOAD_HEADS;
+enum interfaces position_interface = INTERFACE_NONE;
 
 /*
  * printlog (stream, fmt) - print the formatted message to syslog
@@ -153,11 +154,11 @@ static int read_position_from_ams (int *x, int *y, int *z)
  * read_position_from_sysfs() - read the position either from HDAPS or from AMS
  * depending on the given interface.
  */
-static int read_position_from_sysfs (int interface, int *x, int *y, int *z)
+static int read_position_from_sysfs (int *x, int *y, int *z)
 {
-	if (interface == INTERFACE_HDAPS)
+	if (position_interface == INTERFACE_HDAPS)
 		return read_position_from_hdaps(x,y);
-	else if (interface == INTERFACE_AMS)
+	else if (position_interface == INTERFACE_AMS)
 		return read_position_from_ams(x,y,z);
 	return -1;
 }
@@ -182,6 +183,8 @@ static int read_int (const char* filename)
  */
 static int get_km_activity ()
 {
+	if (position_interface != INTERFACE_HDAPS)
+		return 0;
 	if (read_int(MOUSE_ACTIVITY_FILE) == 1)
 		return 1;
 	if (read_int(KEYBD_ACTIVITY_FILE) == 1)
@@ -517,10 +520,10 @@ void add_disk (char* disk, int forceadd)
 	char protect_file[FILENAME_MAX] = "";
 	char protect_method[FILENAME_MAX] = "";
 	if (kernel_interface == UNLOAD_HEADS)
-		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/device/unload_heads", disk);
+		snprintf(protect_file, sizeof(protect_file), UNLOAD_HEADS_PATH(disk));
 	else {
-		snprintf(protect_file, sizeof(protect_file), "/sys/block/%s/queue/protect", disk);
-		snprintf(protect_method, sizeof(protect_method), "/sys/block/%s/queue/protect_method", disk);
+		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_PATH(disk));
+		snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_PATH(disk));
 	}
 
 	if (forceadd) {
@@ -598,7 +601,6 @@ void free_disk (struct list *disk)
 int select_interface (int modprobe)
 {
 	int fd;
-	enum interfaces position_interface;
 
 	char *modules[] = {"hdaps_ec", "hdaps", "ams"};
 	int mod_index;
@@ -637,17 +639,17 @@ int autodetect_devices ()
 	int num_devices = 0;
 	DIR *dp;
 	struct dirent *ep;
-	dp = opendir("/sys/block");
+	dp = opendir(SYSFS_BLOCK);
 	if (dp != NULL) {
 		while (ep = readdir(dp)) {
 			char path[FILENAME_MAX];
 			char removable[FILENAME_MAX];
-			snprintf(removable, sizeof(removable), "/sys/block/%s/removable", ep->d_name);
+			snprintf(removable, sizeof(removable), REMOVABLE_PATH(ep->d_name));
 
 			if (kernel_interface == UNLOAD_HEADS)
-				snprintf(path, sizeof(path), "/sys/block/%s/device/unload_heads", ep->d_name);
+				snprintf(path, sizeof(path), UNLOAD_HEADS_PATH(ep->d_name));
 			else
-				snprintf(path, sizeof(path), "/sys/block/%s/queue/protect", ep->d_name);
+				snprintf(path, sizeof(path), QUEUE_PROTECT_PATH(ep->d_name));
 				
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
@@ -672,7 +674,6 @@ int main (int argc, char** argv)
 	int fd, i, ret, threshold = 15, adaptive = 0,
 	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
-	enum interfaces position_interface = INTERFACE_NONE;
 
 	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0) {
 		protect_factor = 1000;
@@ -762,9 +763,9 @@ int main (int argc, char** argv)
 	printlog(stdout, "Starting "PACKAGE_NAME);
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
-	position_interface = select_interface(0);
+	select_interface(0);
 	if (!position_interface)
-		position_interface = select_interface(1);
+		select_interface(1);
 
 	if (!position_interface) {
 		printlog(stdout, "Could not find a suitable interface");
@@ -863,11 +864,11 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	ret = read_position_from_sysfs (position_interface, &x, &y, &z);
+	ret = read_position_from_sysfs (&x, &y, &z);
 	if (background)
 		for (i = 0; ret && i < 100; ++i) {
 			usleep (100000);	/* 10 Hz */
-			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
+			ret = read_position_from_sysfs (&x, &y, &z);
 		}
 	if (ret) {
 		printlog(stderr, "Could not read position from sysfs.");
@@ -889,7 +890,7 @@ int main (int argc, char** argv)
 	while (running) {
 		if (poll_sysfs) {
 			usleep (1000000/sampling_rate);
-			ret = read_position_from_sysfs (position_interface, &x, &y, &z);
+			ret = read_position_from_sysfs (&x, &y, &z);
 			unow = get_utime(); /* microsec */
 		} else {
 			double oldunow = unow;
