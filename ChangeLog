@@ -1,10 +1,12 @@
-hdapsd 2009xxxx:
+hdapsd 20090401:
 	Evgeni Golov <sargentd@die-welt.net>
 	* Support for the Apple Motion Sensor.
 	* Udev rules obsolete, we can find the device on our own now.
 	* Support autodetection of drives.
 	* Try to autoload the needed modules, when neither HDAPS nor AMS
           is found at startup.
+	* Option to forcely enable UNLOAD on disks where the kernel thinks
+	  it's unsupported.
 
 hdapsd 20090129:
 	Evgeni Golov <sargentd@die-welt.net>:
