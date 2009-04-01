@@ -327,8 +327,7 @@ void usage ()
 	printf("                                     to protect multiple devices.\n");
 	printf("   -f --force                        Force unloading heads, even if kernel thinks\n");
 	printf("                                     differently (on pre ATA7 drives).\n");
-	printf("                                     This only works when adding devices by hand (-d)\n");
-	printf("                                     and must be set BEFORE -d.\n");
+	printf("                                     This only works when adding devices by hand (-d).\n");
 	printf("   -s --sensitivity=<sensitivity>    How sensitive "PACKAGE_NAME" should be to movements.\n");
 	printf("                                     Defaults to 15, higher value means less\n");
 	printf("                                     sensitive.\n");
