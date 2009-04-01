@@ -641,7 +641,7 @@ int autodetect_devices ()
 	struct dirent *ep;
 	dp = opendir(SYSFS_BLOCK);
 	if (dp != NULL) {
-		while (ep = readdir(dp)) {
+		while ((ep = readdir(dp))) {
 			char path[FILENAME_MAX];
 			char removable[FILENAME_MAX];
 			snprintf(removable, sizeof(removable), REMOVABLE_PATH(ep->d_name));
@@ -669,20 +669,12 @@ int autodetect_devices ()
 int main (int argc, char** argv)
 {
 	struct utsname sysinfo;
+	struct list *p = NULL;
 	int c, park_now, protect_factor;
 	int x = 0, y = 0, z = 0;
 	int fd, i, ret, threshold = 15, adaptive = 0,
 	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
-
-	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0) {
-		protect_factor = 1000;
-		kernel_interface = UNLOAD_HEADS;
-	}
-	else {
-		protect_factor = 1;
-		kernel_interface = PROTECT;
-	}
 
 	struct option longopts[] =
 	{
@@ -700,6 +692,15 @@ int main (int argc, char** argv)
 		{"force", no_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
 	};
+
+	if (uname(&sysinfo) < 0 || strcmp("2.6.27", sysinfo.release) <= 0) {
+		protect_factor = 1000;
+		kernel_interface = UNLOAD_HEADS;
+	}
+	else {
+		protect_factor = 1;
+		kernel_interface = PROTECT;
+	}
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
@@ -845,7 +846,7 @@ int main (int argc, char** argv)
 
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	struct list *p = disklist;
+	p = disklist;
 	while (p != NULL) {
 		fd = open (p->protect_file, O_RDWR);
 		if (background)

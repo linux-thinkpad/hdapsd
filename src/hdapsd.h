@@ -46,14 +46,14 @@
 enum interfaces {
 	INTERFACE_NONE,
 	INTERFACE_HDAPS,
-	INTERFACE_AMS,
+	INTERFACE_AMS
 };
 
 char *interface_names[] = {"none", "HDAPS", "AMS"};
 
 enum kernel {
 	PROTECT,
-	UNLOAD_HEADS,
+	UNLOAD_HEADS
 };
 
 struct list {

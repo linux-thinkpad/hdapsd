@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
 int device_open(int id) {
 	char node[32];
