@@ -841,7 +841,7 @@ int main (int argc, char** argv)
 	/* check the protect attribute exists */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	p = disklist;
-	while (p != NULL) {
+	while (p != NULL && !dry_run) {
 		fd = open (p->protect_file, O_RDWR);
 		if (background)
 			for (i = 0; fd < 0 && i < 100; ++i) {
