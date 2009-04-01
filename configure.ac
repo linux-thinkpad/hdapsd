@@ -6,7 +6,7 @@ AC_INIT(hdapsd, 20090129, hdaps-devel@lists.sourceforge.net)
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/hdapsd.c])
 AC_CONFIG_HEADERS([src/config.h])
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile misc/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile])
 
 # Checks for programs.
 AC_PROG_CC
