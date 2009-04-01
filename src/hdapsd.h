@@ -13,6 +13,9 @@
 #define QUEUE_METHOD_FMT	SYSFS_BLOCK"/%s/queue/protect_method"
 #define BUF_LEN                 40
 
+#define FORCE_PROTECT_METHOD	"unload"
+#define FORCE_UNLOAD_HEADS	"-1"
+
 #define FREEZE_SECONDS          1    /* period to freeze disk */
 #define REFREEZE_SECONDS        0.1  /* period after which to re-freeze disk */
 #define FREEZE_EXTRA_SECONDS    4    /* additional timeout for kernel timer */

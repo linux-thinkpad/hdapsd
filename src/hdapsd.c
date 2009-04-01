@@ -728,31 +728,25 @@ int main (int argc, char** argv)
 		char protect_method[FILENAME_MAX] = "";
 		p = disklist;
 		while (p != NULL) {
-			if (kernel_interface == UNLOAD_HEADS) {
+			snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_FMT, p->name);
+			if (kernel_interface == UNLOAD_HEADS)
 				fd = open (p->protect_file, O_RDWR);
-				if (fd > 0) {
-					if ((write(fd, "-1", 2)) == -1)
-						printlog(stderr, "Could not forcely enable UNLOAD feature for %s", p->name);
-					else
-						printlog(stdout, "Forcely enabled UNLOAD for %s", p->name);
-					close(fd);
-				}
-				else
-					printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", p->protect_file);
-			}
-			else {
-				snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_FMT, p->name);
+			else
 				fd = open (protect_method, O_RDWR);
-				if (fd > 0) {
-					if ((write(fd, "unload", 6)) == -1)
-						printlog(stderr, "Could not forcely enable UNLOAD feature for %s", p->name);
-					else
-						printlog(stdout, "Forcely enabled UNLOAD for %s", p->name);
-					close(fd);
-				}
+			if (fd > 0) {
+				if (kernel_interface == UNLOAD_HEADS)
+					ret = write(fd, FORCE_UNLOAD_HEADS, strlen(FORCE_UNLOAD_HEADS));
 				else
-					printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_method);
+					ret = write(fd, FORCE_PROTECT_METHOD, strlen(FORCE_PROTECT_METHOD));
+				if (ret == -1)
+					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", p->name);
+				else
+					printlog(stdout, "Forcely enabled UNLOAD for %s", p->name);
+				close(fd);
 			}
+			else
+				printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", p->protect_file);
+
 			p = p->next;
 		}
 	}
