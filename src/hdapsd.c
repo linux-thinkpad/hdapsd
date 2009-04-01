@@ -520,10 +520,10 @@ void add_disk (char* disk, int forceadd)
 	char protect_file[FILENAME_MAX] = "";
 	char protect_method[FILENAME_MAX] = "";
 	if (kernel_interface == UNLOAD_HEADS)
-		snprintf(protect_file, sizeof(protect_file), UNLOAD_HEADS_PATH(disk));
+		snprintf(protect_file, sizeof(protect_file), UNLOAD_HEADS_FMT, disk);
 	else {
-		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_PATH(disk));
-		snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_PATH(disk));
+		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_FMT, disk);
+		snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_FMT, disk);
 	}
 
 	if (forceadd) {
@@ -644,12 +644,12 @@ int autodetect_devices ()
 		while ((ep = readdir(dp))) {
 			char path[FILENAME_MAX];
 			char removable[FILENAME_MAX];
-			snprintf(removable, sizeof(removable), REMOVABLE_PATH(ep->d_name));
+			snprintf(removable, sizeof(removable), REMOVABLE_FMT, ep->d_name);
 
 			if (kernel_interface == UNLOAD_HEADS)
-				snprintf(path, sizeof(path), UNLOAD_HEADS_PATH(ep->d_name));
+				snprintf(path, sizeof(path), UNLOAD_HEADS_FMT, ep->d_name);
 			else
-				snprintf(path, sizeof(path), QUEUE_PROTECT_PATH(ep->d_name));
+				snprintf(path, sizeof(path), QUEUE_PROTECT_FMT, ep->d_name);
 				
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
