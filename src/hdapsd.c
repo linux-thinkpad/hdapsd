@@ -515,43 +515,13 @@ int analyze (int x, int y, double unow, double base_threshold,
 /*
  * add_disk (disk) - add the given disk to the global disklist
  */
-void add_disk (char* disk, int forceadd)
+void add_disk (char* disk)
 {
 	char protect_file[FILENAME_MAX] = "";
-	char protect_method[FILENAME_MAX] = "";
 	if (kernel_interface == UNLOAD_HEADS)
 		snprintf(protect_file, sizeof(protect_file), UNLOAD_HEADS_FMT, disk);
 	else {
 		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_FMT, disk);
-		snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_FMT, disk);
-	}
-
-	if (forceadd) {
-		int fd;
-		if (kernel_interface == UNLOAD_HEADS) {
-			fd = open (protect_file, O_RDWR);
-			if (fd > 0) {
-				if ((write(fd, "-1", 2)) == -1)
-					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
-				else
-					printlog(stdout, "Forcely enabled UNLOAD for %s", disk);
-				close(fd);
-			}
-			else
-				printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_file);
-		}
-		else {
-			fd = open (protect_method, O_RDWR);
-			if (fd > 0) {
-				if ((write(fd, "unload", 6)) == -1)
-					printlog(stderr, "Could not forcely enable UNLOAD feature for %s", disk);
-				else
-					printlog(stdout, "Forcely enabled UNLOAD for %s", disk);
-				close(fd);
-			}
-			else
-				printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_method);
-		}
 	}
 	
 	if (disklist == NULL) {
@@ -653,7 +623,7 @@ int autodetect_devices ()
 				
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
-				add_disk(ep->d_name, 0);
+				add_disk(ep->d_name);
 				num_devices++;
 			}
 		}
@@ -707,7 +677,7 @@ int main (int argc, char** argv)
 	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
-				add_disk(optarg, forceadd);
+				add_disk(optarg);
 				break;
 			case 's':
 				threshold = atoi(optarg);
@@ -751,7 +721,42 @@ int main (int argc, char** argv)
 				break;
 		}
 	}
+
+	printlog(stdout, "Starting "PACKAGE_NAME);
 	
+	if (disklist && forceadd) {
+		char protect_method[FILENAME_MAX] = "";
+		p = disklist;
+		while (p != NULL) {
+			if (kernel_interface == UNLOAD_HEADS) {
+				fd = open (p->protect_file, O_RDWR);
+				if (fd > 0) {
+					if ((write(fd, "-1", 2)) == -1)
+						printlog(stderr, "Could not forcely enable UNLOAD feature for %s", p->name);
+					else
+						printlog(stdout, "Forcely enabled UNLOAD for %s", p->name);
+					close(fd);
+				}
+				else
+					printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", p->protect_file);
+			}
+			else {
+				snprintf(protect_method, sizeof(protect_method), QUEUE_METHOD_FMT, p->name);
+				fd = open (protect_method, O_RDWR);
+				if (fd > 0) {
+					if ((write(fd, "unload", 6)) == -1)
+						printlog(stderr, "Could not forcely enable UNLOAD feature for %s", p->name);
+					else
+						printlog(stdout, "Forcely enabled UNLOAD for %s", p->name);
+					close(fd);
+				}
+				else
+					printlog(stderr, "Could not open %s for forcely enabling UNLOAD feature", protect_method);
+			}
+			p = p->next;
+		}
+	}
+
 	if (disklist == NULL) {
 		printlog(stdout, "WARNING: You did not supply any devices to protect, trying autodetection.");
 		if (autodetect_devices() < 1)
@@ -760,8 +765,6 @@ int main (int argc, char** argv)
 
 	if (disklist == NULL)
 		usage(argv);
-
-	printlog(stdout, "Starting "PACKAGE_NAME);
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
 	select_interface(0);
@@ -779,7 +782,6 @@ int main (int argc, char** argv)
 		if (position_interface == INTERFACE_HDAPS) {
 			hdaps_input_nr = device_find_byphys("hdaps/input1");
 			hdaps_input_fd = device_open(hdaps_input_nr);
-			/* hdaps_input_fd = open(POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd < 0) {
 				printlog(stdout,
 				        "WARNING: Could not find hdaps input device (%s). "
@@ -790,12 +792,11 @@ int main (int argc, char** argv)
 				poll_sysfs = 1;
 			}
 			else {
-				printlog(stdout, "Selected HDAPS input device /dev/input/event%d", hdaps_input_nr);
+				printlog(stdout, "Selected HDAPS input device: /dev/input/event%d", hdaps_input_nr);
 			}
 		} else if (position_interface == INTERFACE_AMS) {
 			hdaps_input_nr = device_find_byname("Apple Motion Sensor");
 			hdaps_input_fd = device_open(hdaps_input_nr);
-			/* hdaps_input_fd = open(AMS_POSITION_INPUTDEV, O_RDONLY); */
 			if (hdaps_input_fd < 0) {
 				printlog(stdout,
 					"WARNING: Could not find AMS input device, do you need to set joystick=1?");
@@ -835,7 +836,7 @@ int main (int argc, char** argv)
 	mlockall(MCL_FUTURE);
 
 	if (verbose) {
-		struct list *p = disklist;
+		p = disklist;
 		while (p != NULL) {
 			printf("disk: %s\n", p->name);
 			p = p->next;
@@ -918,7 +919,7 @@ int main (int argc, char** argv)
 		if (park_now && !pause_now) {
 			if (!parked || unow>parked_utime+REFREEZE_SECONDS) {
 				/* Not frozen or freeze about to expire */
-				struct list *p = disklist;
+				p = disklist;
 				while (p != NULL) {
 					write_protect(p->protect_file,
 					      (FREEZE_SECONDS+FREEZE_EXTRA_SECONDS) * protect_factor);
@@ -937,7 +938,7 @@ int main (int argc, char** argv)
 			if (parked &&
 			    (pause_now || unow>parked_utime+FREEZE_SECONDS)) {
 				/* Sanity check */
-				struct list *p = disklist;
+				p = disklist;
 				while (p != NULL) {
 					if (!dry_run && !read_int(p->protect_file))
 						printlog(stderr, "Error! Not parked when we "
