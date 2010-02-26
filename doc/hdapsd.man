@@ -35,6 +35,11 @@ Don't actually park the drive.
 \fB\-y\fR \fB\-\-poll\-sysfs\fR
 Force use of sysfs interface to accelerometer.
 .TP
+\fB\-H\fR \fB\-\-hardware\-logic\fR
+Uses the hardware fall detection logic instead of the software
+one. Options \-\-sensitivity and \-\-adaptive have no effect
+in this mode.
+.TP
 \fB\-l\fR \fB\-\-syslog\fR
 Log to syslog instead of stdout/stderr.
 .TP

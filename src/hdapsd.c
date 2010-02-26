@@ -53,6 +53,7 @@ static int verbose = 0;
 static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
+static int hardware_logic = 0;
 static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
@@ -61,6 +62,7 @@ static int dosyslog = 0;
 char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
 int hdaps_input_nr = -1;
+int freefall_fd = -1;
 
 struct list *disklist = NULL;
 enum kernel kernel_interface = UNLOAD_HEADS;
@@ -354,6 +356,9 @@ void usage ()
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to\n");
 	printf("                                     accelerometer.\n");
+	printf("   -H --hardware-logic               Use the hardware fall detection logic instead of\n");
+	printf("                                     the software one (-s/--sensitivity and -a/--adaptive\n");
+	printf("                                     have no effect in this mode).\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
@@ -675,6 +680,7 @@ int main (int argc, char** argv)
 		{"pidfile", optional_argument, NULL, 'p'},
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
+		{"hardware-logic", no_argument, NULL, 'H'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
 		{"syslog", no_argument, NULL, 'l'},
@@ -693,7 +699,7 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlf", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHVhlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -724,6 +730,9 @@ int main (int argc, char** argv)
 				break;
 			case 'y':
 				poll_sysfs = 1;
+				break;
+		        case 'H':
+				hardware_logic = 1;
 				break;
 			case 'V':
 				version();
@@ -791,7 +800,23 @@ int main (int argc, char** argv)
 	else
 		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
 
-	if (!poll_sysfs) {
+	if (hardware_logic) {
+		/* Open the file representing the hardware decision */
+	        freefall_fd = open (HP3D_FREEFALL_FILE, HP3D_FREEFALL_FD_FLAGS);
+		if (freefall_fd < 0) {
+				printlog(stdout,
+				        "WARNING: Failed openning the hardware logic file (%s). "
+					"It is probably not supported on your system. "
+				        "Falling back to software logic.\n"
+				        "Use '-y' to silence this warning.",
+				        strerror(errno));
+				hardware_logic = 0;
+		}
+		else {
+			printlog (stdout, "Uses hardware logic from " HP3D_FREEFALL_FILE);
+		}
+	}
+	if (!poll_sysfs && !hardware_logic) {
 		if (position_interface == INTERFACE_HDAPS) {
 			hdaps_input_nr = device_find_byphys("hdaps/input1");
 			hdaps_input_fd = device_open(hdaps_input_nr);
@@ -866,7 +891,7 @@ int main (int argc, char** argv)
 			p = p->next;
 		}
 		printf("threshold: %i\n", threshold);
-		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
+		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : (hardware_logic ? "hardware-logic" : "input-dev"));
 	}
 
 	/* check the protect attribute exists */
@@ -916,31 +941,66 @@ int main (int argc, char** argv)
 	signal(SIGTERM, SIGTERM_handler);
 
 	while (running) {
-		if (poll_sysfs) {
-			usleep (1000000/sampling_rate);
-			ret = read_position_from_sysfs (&x, &y, &z);
-			unow = get_utime(); /* microsec */
-		} else {
-			double oldunow = unow;
-			int oldx = x, oldy = y, oldz = z;
-			ret = read_position_from_inputdev (&x, &y, &z, &unow);
-
-			/* The input device issues events only when the position changed.
-			 * The analysis state needs to know how long the position remained
-			 * unchanged, so send analyze() a fake retroactive update before sending
-			 * the new one. */
-			if (!ret && oldunow && unow-oldunow > 1.5/sampling_rate)
-				analyze(oldx, oldy, unow-1.0/sampling_rate, threshold, adaptive, parked);
+		if (!hardware_logic) { /* The decision is made by the software */
+			/* Get statistics and decide what to do */
+			if (poll_sysfs) {
+				usleep (1000000/sampling_rate);
+				ret = read_position_from_sysfs (&x, &y, &z);
+				unow = get_utime(); /* microsec */
+			} else {
+				double oldunow = unow;
+				int oldx = x, oldy = y, oldz = z;
+				ret = read_position_from_inputdev (&x, &y, &z, &unow);
 				
-		}
+				/* The input device issues events only when the position changed.
+				 * The analysis state needs to know how long the position remained
+				 * unchanged, so send analyze() a fake retroactive update before sending
+				 * the new one. */
+				if (!ret && oldunow && unow-oldunow > 1.5/sampling_rate)
+					analyze(oldx, oldy, unow-1.0/sampling_rate, threshold, adaptive, parked);
+				
+			}
 
-		if (ret) {
+			if (ret) {
+				if (verbose)
+					printf("readout error (%d)\n", ret);
+				continue;
+			}
+
+			park_now = analyze(x, y, unow, threshold, adaptive, parked);
+		}
+		else /* if (hardware_logic) */ {
+			unsigned char count; /* Number of fall events */
+			if (!parked) {
+				/* Wait for the hardware to notify a fall */
+				ret = read(freefall_fd, &count, sizeof(count));
+			}
+			else {
+				/* Poll to check if we no longer are falling *
+				 * (hardware_logic polls only when parked) */
+				usleep (1000000/sampling_rate);
+				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS|O_NONBLOCK);
+				ret = read(freefall_fd, &count, sizeof(count));
+				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS);
+				/* If the error is EAGAIN then it is not a real error but
+				 * a sign that the fall has ended */
+				if (ret != sizeof(count) && errno == EAGAIN) {
+					count = 0; /* set fall events count to 0 */
+					ret = sizeof(count); /* Validate count */
+				}
+			}
+			/* handle read errors */
+			if (ret != sizeof(count)) {
+				if (verbose)
+					printf("readout error (%d)\n", ret);
+				continue;
+			}
+			/* Display the read values in verbose mode */
 			if (verbose)
-				printf("readout error (%d)\n", ret);
-			continue;
+				printf ("HW=%u\n", (unsigned) count);
+			unow = get_utime(); /* microsec */
+			park_now = (count > 0);
 		}
-
-		park_now = analyze(x, y, unow, threshold, adaptive, parked);
 
 		if (park_now && !pause_now) {
 			if (!parked || unow>parked_utime+REFREEZE_SECONDS) {
