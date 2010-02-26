@@ -8,6 +8,7 @@
 #define HP3D_SAMPLING_RATE_FILE "/sys/devices/platform/lis3lv02d/rate"
 #define AMS_POSITION_FILE	"/sys/devices/ams/current"
 #define HP3D_POSITION_FILE      "/sys/devices/platform/lis3lv02d/position"
+#define HP3D_LED_FILE     "/sys/devices/virtual/leds/hp::hddprotect/brightness"
 #define HP3D_FREEFALL_FILE      "/dev/freefall"
 #define HP3D_FREEFALL_FD_FLAGS  (O_RDONLY)
 #define SYSFS_BLOCK		"/sys/block"

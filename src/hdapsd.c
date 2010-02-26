@@ -84,7 +84,7 @@ void printlog (FILE *stream, const char *fmt, ...)
 	va_end(ap);
 
 	if (dosyslog)
-		syslog(LOG_INFO, msg);
+	        syslog(LOG_INFO, msg);
 	else {
 		now = time((time_t *)NULL);
 		fprintf(stream, "%.24s: %s\n", ctime(&now), msg);
@@ -190,6 +190,23 @@ static int read_int (const char* filename)
 	if (sscanf (buf, "%d\n", &ret) != 1)
 		return -EIO;
 	return ret;
+}
+
+/*
+ * write_int() - writes an integer to a file
+ */
+static int write_int (const char* filename, const int value)
+{
+	char buf[BUF_LEN];
+	int fd;
+	int size;
+	fd = open (filename, O_WRONLY);
+	if (fd < 0)
+	        return -1;
+	size = snprintf (buf, BUF_LEN, "%i\n", value);
+	if (write (fd, buf, size) < 0)
+	        return -1;
+	return close (fd);
 }
 
 /*
@@ -1015,8 +1032,10 @@ int main (int argc, char** argv)
 				 * whatever else is handling our stdout, may be 
 				 * swapped out).
 				*/
-				if (!parked)
-					printlog(stdout, "parking");
+				if (!parked) {
+				        printlog(stdout, "parking");
+					write_int (HP3D_LED_FILE, 1);
+				}
 				parked = 1;
 				parked_utime = unow;
 			} 
@@ -1032,6 +1051,7 @@ int main (int argc, char** argv)
 					               "and timer expired?)");
 					/* Freeze has expired */
 					write_protect(p->protect_file, 0); /* unprotect */
+					write_int (HP3D_LED_FILE, 0);
 					p = p->next;
 				}
 				parked = 0;
