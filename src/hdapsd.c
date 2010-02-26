@@ -150,8 +150,18 @@ static int read_position_from_ams (int *x, int *y, int *z)
 	return (sscanf (buf, "%d %d %d\n", x, y, z) != 3);
 }
 
+static int read_position_from_hp3d (int *x, int *y, int *z)
+{
+	char buf[BUF_LEN];
+	int ret;
+	if ((ret = slurp_file(HP3D_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "(%d,%d,%d)\n", x, y, z) != 3);
+}
+
 /*
- * read_position_from_sysfs() - read the position either from HDAPS or from AMS
+ * read_position_from_sysfs() - read the position either from HDAPS or
+ * from AMS or from HP3D
  * depending on the given interface.
  */
 static int read_position_from_sysfs (int *x, int *y, int *z)
@@ -160,6 +170,8 @@ static int read_position_from_sysfs (int *x, int *y, int *z)
 		return read_position_from_hdaps(x,y);
 	else if (position_interface == INTERFACE_AMS)
 		return read_position_from_ams(x,y,z);
+	else if (position_interface == INTERFACE_HP3D)
+		return read_position_from_hp3d(x,y,z);
 	return -1;
 }
 
@@ -571,9 +583,10 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel"};
 	int mod_index;
 	char command[64];
+	position_interface = INTERFACE_NONE;
 
 	if (modprobe) {
 		for (mod_index = 0; mod_index < sizeof(modules)/sizeof(modules[0]); mod_index++) {
@@ -581,21 +594,28 @@ int select_interface (int modprobe)
 			system(command);
 		}
 	}
-
+	
+	/* We don't know yet which interface to use, try HDAPS */
 	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
-	if (fd < 0) { /* opening hdaps file failed */
+	if (fd >= 0) { /* yes, we are hdaps */
+		close(fd);
+		position_interface = INTERFACE_HDAPS;
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try AMS */
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
-		if (fd < 0) { /* opening ams failed too */
-			position_interface = INTERFACE_NONE;
-		}
-		else {
+		if (fd >= 0) { /* yes, we are ams */
 			close(fd);
 			position_interface = INTERFACE_AMS;
 		}
 	}
-	else { /* yes, we are hdaps */
-		close(fd);
-		position_interface = INTERFACE_HDAPS;
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try HP3D */
+		fd = open(HP3D_POSITION_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are hp3d */
+			close(fd);
+			position_interface = INTERFACE_HP3D;
+		}
 	}
 	return position_interface;
 }
@@ -798,6 +818,17 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected AMS input device /dev/input/event%d", hdaps_input_nr);
 			}
+		} else if (position_interface == INTERFACE_HP3D) {
+			hdaps_input_nr = device_find_byname("ST LIS3LV02DL Accelerometer");
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd < 0) {
+				printlog(stdout,
+					"WARNING: Could not find HP3D input device");
+				poll_sysfs = 1;
+			}
+			else {
+				printlog(stdout, "Selected HP3D input device /dev/input/event%d", hdaps_input_nr);
+			}
 		}
 	}
 
@@ -872,7 +903,9 @@ int main (int argc, char** argv)
 
     /* adapt to the driver's sampling rate */
 	if (position_interface == INTERFACE_HDAPS)
-		sampling_rate = read_int(SAMPLING_RATE_FILE);
+		sampling_rate = read_int(HDAPS_SAMPLING_RATE_FILE);
+	else if (position_interface == INTERFACE_HP3D)
+		sampling_rate = read_int(HP3D_SAMPLING_RATE_FILE);
 	if (sampling_rate <= 0)
 		sampling_rate = DEFAULT_SAMPLING_RATE;
 	if (verbose)
