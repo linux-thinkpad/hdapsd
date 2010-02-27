@@ -822,7 +822,10 @@ int main (int argc, char** argv)
 	}
 	else
 		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
-
+	if (position_interface == INTERFACE_HP3D && !poll_sysfs) {
+		printlog(stdout, "Forcing the hardware logic because of HP3D's sensors");
+		hardware_logic = 1;
+	}
 	if (hardware_logic) {
 		/* Open the file representing the hardware decision */
 	        freefall_fd = open (HP3D_FREEFALL_FILE, HP3D_FREEFALL_FD_FLAGS);
@@ -834,6 +837,7 @@ int main (int argc, char** argv)
 				        "Use '-y' to silence this warning.",
 				        strerror(errno));
 				hardware_logic = 0;
+				poll_sysfs = 1;
 		}
 		else {
 			printlog (stdout, "Uses hardware logic from " HP3D_FREEFALL_FILE);
