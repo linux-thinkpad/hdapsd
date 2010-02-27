@@ -40,6 +40,9 @@ Uses the hardware fall detection logic instead of the software
 one. Options \-\-sensitivity and \-\-adaptive have no effect
 in this mode.
 .TP
+\fB\-L\fR \fB\-\-no\-leds\fR
+Don't blink the LEDs when a shock is detected.
+.TP
 \fB\-l\fR \fB\-\-syslog\fR
 Log to syslog instead of stdout/stderr.
 .TP

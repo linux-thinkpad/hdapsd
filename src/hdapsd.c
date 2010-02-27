@@ -58,6 +58,7 @@ static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
+static int use_leds = 1;
 
 char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
@@ -376,6 +377,7 @@ void usage ()
 	printf("   -H --hardware-logic               Use the hardware fall detection logic instead of\n");
 	printf("                                     the software one (-s/--sensitivity and -a/--adaptive\n");
 	printf("                                     have no effect in this mode).\n");
+	printf("   -L --no-leds                      Don't blink the LEDs.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
@@ -700,6 +702,7 @@ int main (int argc, char** argv)
 		{"hardware-logic", no_argument, NULL, 'H'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
+		{"no-leds", no_argument, NULL, 'L'},
 		{"syslog", no_argument, NULL, 'l'},
 		{"force", no_argument, NULL, 'f'},
 		{NULL, 0, NULL, 0}
@@ -716,7 +719,7 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHVhlf", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHVhLlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -757,6 +760,8 @@ int main (int argc, char** argv)
 			case 'l':
 				dosyslog = 1;
 				break;
+		        case 'L':
+			        use_leds = 0;
 			case 'f':
 				forceadd = 1;
 				break;
@@ -871,6 +876,10 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected HP3D input device /dev/input/event%d", hdaps_input_nr);
 			}
+		}
+		if (position_interface != INTERFACE_HP3D) {
+			/* LEDs are not supported yet on other systems */
+			use_leds = 0;
 		}
 	}
 
@@ -1034,7 +1043,8 @@ int main (int argc, char** argv)
 				*/
 				if (!parked) {
 				        printlog(stdout, "parking");
-					write_int (HP3D_LED_FILE, 1);
+					if (use_leds)
+						write_int (HP3D_LED_FILE, 1);
 				}
 				parked = 1;
 				parked_utime = unow;
@@ -1051,7 +1061,8 @@ int main (int argc, char** argv)
 					               "and timer expired?)");
 					/* Freeze has expired */
 					write_protect(p->protect_file, 0); /* unprotect */
-					write_int (HP3D_LED_FILE, 0);
+					if (use_leds)
+						write_int (HP3D_LED_FILE, 0);
 					p = p->next;
 				}
 				parked = 0;
