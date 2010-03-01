@@ -2,8 +2,13 @@ hdapsd - Hard Drive Active Protection System Daemon
 ===================================================
 
 This is a disk protection user-space daemon. It monitors the acceleration
-values through the HDAPS/AMS interfaces and automatically initiates disk head
-parking if a fall or sliding of the laptop is detected.
+values through the various motion interfaces and automatically initiates
+disk head parking if a fall or sliding of the laptop is detected.
+
+Currently, the following motion interfaces are supported:
+ * HDAPS on IBM/Lenovo ThinkPads
+ * AMS on Apple G4 iBooks and PowerBooks
+ * HP3D on Hewlett-Packard laptops
 
 1. Compilation
 --------------
@@ -31,8 +36,8 @@ For kernels <2.6.28, please have a look at
 http://www.thinkwiki.org/wiki/HDAPS#Kernel_patch
 and patch your kernel with the appropriate patch before using hdapsd.
 
-4. mainline hdaps module vs tp_smapi
-------------------------------------
+4. mainline hdaps module vs tp_smapi (ThinkPad only)
+----------------------------------------------------
 The mainline hdaps module present in Linux kernels does not support all
 hdaps-enabled ThinkPads, thus it is recommended to use the one provided
 by tp_smapi.
