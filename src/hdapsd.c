@@ -112,7 +112,7 @@ static int slurp_file (const char* filename, char* buf)
 	if (fd < 0) {
 		printlog(stderr, "Could not open %s: %s.\nDo you have the hdaps module loaded?", filename, strerror(errno));
 		return fd;
-	}	
+	}
 
 	ret = read (fd, buf, BUF_LEN-1);
 	if (ret < 0) {
@@ -293,7 +293,7 @@ static int write_protect (const char *path, int val)
 	if (fd < 0) {
 		printlog (stderr, "Could not open %s", path);
 		return fd;
-	}	
+	}
 
 	ret = write (fd, buf, strlen(buf));
 
@@ -321,7 +321,7 @@ double get_utime (void)
 	return tv.tv_sec + tv.tv_usec/1000000.0;
 }
 
-/* 
+/*
  * SIGUSR1_handler - Handler for SIGUSR1, sleeps for a few seconds. Useful when suspending laptop.
  */
 void SIGUSR1_handler (int sig)
@@ -349,7 +349,7 @@ void version ()
 }
 
 /*
- * usage() - display usage instructions and exit 
+ * usage() - display usage instructions and exit
  */
 void usage ()
 {
@@ -423,8 +423,8 @@ void check_thresh (double val_sqr, double thresh, int* above, int* near,
  * adaptive threshold. The adaptive threshold slowly decreases back to the
  * base threshold when no value approaches it.
  */
-int analyze (int x, int y, double unow, double base_threshold, 
-             int adaptive, int parked) 
+int analyze (int x, int y, double unow, double base_threshold,
+             int adaptive, int parked)
 {
 	static int x_last = 0, y_last = 0;
 	static double unow_last = 0, x_veloc_last = 0, y_veloc_last = 0;
@@ -452,7 +452,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 	if (adaptive && unow > last_thresh_change + THRESH_ADAPT_SEC) {
 		if (recently_near_thresh) {
 			if (last_km_activity > last_near_thresh &&
-			    last_km_activity > last_thresh_change) { 
+			    last_km_activity > last_thresh_change) {
 				/* Near threshold and k/m activity */
 				adaptive_threshold *= THRESH_INCREASE_FACTOR;
 				last_thresh_change = unow;
@@ -465,7 +465,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 			last_thresh_change = unow;
 		}
 	}
-	
+
 	/* compute deltas */
 	udelta = unow - unow_last;
 	x_delta = x - x_last;
@@ -494,7 +494,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 
 	/* Threshold test (uses Pythagoras's theorem) */
 	strcpy(reason, "   ");
-	
+
 	check_thresh(veloc_sqr, threshold*VELOC_ADJUST,
 	             &above, &near, reason+0, 'V');
 	check_thresh(accel_sqr, threshold*ACCEL_ADJUST,
@@ -559,7 +559,7 @@ void add_disk (char* disk)
 	else {
 		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_FMT, disk);
 	}
-	
+
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
 		if (disklist == NULL) {
@@ -619,7 +619,7 @@ int select_interface (int modprobe)
 			system(command);
 		}
 	}
-	
+
 	/* We don't know yet which interface to use, try HDAPS */
 	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
 	if (fd >= 0) { /* yes, we are hdaps */
@@ -664,7 +664,7 @@ int autodetect_devices ()
 				snprintf(path, sizeof(path), UNLOAD_HEADS_FMT, ep->d_name);
 			else
 				snprintf(path, sizeof(path), QUEUE_PROTECT_FMT, ep->d_name);
-				
+
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
 				add_disk(ep->d_name);
@@ -677,7 +677,7 @@ int autodetect_devices ()
 }
 
 /*
- * main() - loop forever, reading the hdaps values and 
+ * main() - loop forever, reading the hdaps values and
  *          parking/unparking as necessary
  */
 int main (int argc, char** argv)
@@ -774,7 +774,7 @@ int main (int argc, char** argv)
 	}
 
 	printlog(stdout, "Starting "PACKAGE_NAME);
-	
+
 	if (disklist && forceadd) {
 		char protect_method[FILENAME_MAX] = "";
 		p = disklist;
@@ -957,7 +957,7 @@ int main (int argc, char** argv)
 		return 1;
 	}
 
-    /* adapt to the driver's sampling rate */
+	/* adapt to the driver's sampling rate */
 	if (position_interface == INTERFACE_HDAPS)
 		sampling_rate = read_int(HDAPS_SAMPLING_RATE_FILE);
 	else if (position_interface == INTERFACE_HP3D)
@@ -982,14 +982,16 @@ int main (int argc, char** argv)
 				double oldunow = unow;
 				int oldx = x, oldy = y, oldz = z;
 				ret = read_position_from_inputdev (&x, &y, &z, &unow);
-				
-				/* The input device issues events only when the position changed.
+
+				/*
+				 * The input device issues events only when the position changed.
 				 * The analysis state needs to know how long the position remained
 				 * unchanged, so send analyze() a fake retroactive update before sending
-				 * the new one. */
+				 * the new one.
+				 */
 				if (!ret && oldunow && unow-oldunow > 1.5/sampling_rate)
 					analyze(oldx, oldy, unow-1.0/sampling_rate, threshold, adaptive, parked);
-				
+
 			}
 
 			if (ret) {
@@ -1007,14 +1009,18 @@ int main (int argc, char** argv)
 				ret = read(freefall_fd, &count, sizeof(count));
 			}
 			else {
-				/* Poll to check if we no longer are falling *
-				 * (hardware_logic polls only when parked) */
+				/*
+				 * Poll to check if we no longer are falling
+				 * (hardware_logic polls only when parked)
+				 */
 				usleep (1000000/sampling_rate);
 				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS|O_NONBLOCK);
 				ret = read(freefall_fd, &count, sizeof(count));
 				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS);
-				/* If the error is EAGAIN then it is not a real error but
-				 * a sign that the fall has ended */
+				/*
+				 * If the error is EAGAIN then it is not a real error but
+				 * a sign that the fall has ended
+				 */
 				if (ret != sizeof(count) && errno == EAGAIN) {
 					count = 0; /* set fall events count to 0 */
 					ret = sizeof(count); /* Validate count */
@@ -1042,10 +1048,11 @@ int main (int argc, char** argv)
 					      (FREEZE_SECONDS+FREEZE_EXTRA_SECONDS) * protect_factor);
 					p = p->next;
 				}
-				/* Write protect before any output (xterm, or 
-				 * whatever else is handling our stdout, may be 
+				/*
+				 * Write protect before any output (xterm, or
+				 * whatever else is handling our stdout, may be
 				 * swapped out).
-				*/
+				 */
 				if (!parked) {
 				        printlog(stdout, "parking");
 					if (use_leds)
@@ -1053,7 +1060,7 @@ int main (int argc, char** argv)
 				}
 				parked = 1;
 				parked_utime = unow;
-			} 
+			}
 		} else {
 			if (parked &&
 			    (pause_now || unow>parked_utime+FREEZE_SECONDS)) {
