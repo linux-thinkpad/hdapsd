@@ -154,6 +154,9 @@ static int read_position_from_ams (int *x, int *y, int *z)
 	return (sscanf (buf, "%d %d %d\n", x, y, z) != 3);
 }
 
+/*
+ * read_position_from_hp3d() - read the (x,y,z) position from HP3D via sysfs file
+ */
 static int read_position_from_hp3d (int *x, int *y, int *z)
 {
 	char buf[BUF_LEN];
@@ -253,7 +256,7 @@ static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 						*x = ev.value;
 						break;
 					case ABS_Y:
-						*y = ev.value; 
+						*y = ev.value;
 						break;
 					case ABS_Z:
 						*z = ev.value;
