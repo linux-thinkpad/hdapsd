@@ -907,6 +907,17 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected HP3D input device /dev/input/event%d", hdaps_input_nr);
 			}
+		} else if (position_interface == INTERFACE_APPLESMC) {
+			hdaps_input_nr = device_find_byname("applesmc");
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd < 0) {
+				printlog(stdout,
+					"WARNING: Could not find APPLESMC input device");
+				poll_sysfs = 1;
+			}
+			else {
+				printlog(stdout, "Selected APPLESMC input device /dev/input/event%d", hdaps_input_nr);
+			}
 		}
 		if (position_interface != INTERFACE_HP3D) {
 			/* LEDs are not supported yet on other systems */
