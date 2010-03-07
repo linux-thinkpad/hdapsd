@@ -167,6 +167,19 @@ static int read_position_from_hp3d (int *x, int *y, int *z)
 }
 
 /*
+ * read_position_from_applesmc() - read the (x,y,z) position from APPLESMC
+ * via sysfs file
+ */
+static int read_position_from_applesmc (int *x, int *y, int *z)
+{
+	char buf[BUF_LEN];
+	int ret;
+	if ((ret = slurp_file(APPLESMC_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "(%d,%d,%d)\n", x, y, z) != 3);
+}
+
+/*
  * read_position_from_sysfs() - read the position either from HDAPS or
  * from AMS or from HP3D
  * depending on the given interface.
@@ -179,6 +192,8 @@ static int read_position_from_sysfs (int *x, int *y, int *z)
 		return read_position_from_ams(x,y,z);
 	else if (position_interface == INTERFACE_HP3D)
 		return read_position_from_hp3d(x,y,z);
+	else if (position_interface == INTERFACE_APPLESMC)
+		return read_position_from_applesmc(x,y,z);
 	return -1;
 }
 
@@ -611,7 +626,7 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc"};
 	int mod_index;
 	char command[64];
 	position_interface = INTERFACE_NONE;
@@ -643,6 +658,14 @@ int select_interface (int modprobe)
 		if (fd >= 0) { /* yes, we are hp3d */
 			close(fd);
 			position_interface = INTERFACE_HP3D;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try APPLESMC */
+		fd = open(APPLESMC_POSITION_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are applesmc */
+			close(fd);
+			position_interface = INTERFACE_APPLESMC;
 		}
 	}
 	return position_interface;

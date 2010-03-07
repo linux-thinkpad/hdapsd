@@ -11,6 +11,7 @@
 #define HP3D_LED_FILE     "/sys/devices/virtual/leds/hp::hddprotect/brightness"
 #define HP3D_FREEFALL_FILE      "/dev/freefall"
 #define HP3D_FREEFALL_FD_FLAGS  (O_RDONLY)
+#define APPLESMC_POSITION_FILE	"/sys/devices/applesmc.768/position"
 #define SYSFS_BLOCK		"/sys/block"
 #define REMOVABLE_FMT		SYSFS_BLOCK"/%s/removable"
 #define UNLOAD_HEADS_FMT	SYSFS_BLOCK"/%s/device/unload_heads"
@@ -55,10 +56,11 @@ enum interfaces {
 	INTERFACE_NONE,
 	INTERFACE_HDAPS,
 	INTERFACE_AMS,
-	INTERFACE_HP3D
+	INTERFACE_HP3D,
+	INTERFACE_APPLESMC
 };
 
-char *interface_names[] = {"none", "HDAPS", "AMS", "HP3D"};
+char *interface_names[] = {"none", "HDAPS", "AMS", "HP3D", "APPLESMC"};
 
 enum kernel {
 	PROTECT,
@@ -70,4 +72,3 @@ struct list {
 	char protect_file[FILENAME_MAX];
 	struct list *next;
 };
-
