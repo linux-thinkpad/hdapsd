@@ -3,7 +3,7 @@ hdapsd 2010xxxx:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
 
 	Evgeni Golov <sargentd@die-welt.net>:
-        * Support for Apple MacBooks and PowerBooks with Intel CPUs.
+        * Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
 
 hdapsd 20090401:
 	Evgeni Golov <sargentd@die-welt.net>:

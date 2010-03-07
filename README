@@ -9,7 +9,7 @@ Currently, the following motion interfaces are supported:
  * HDAPS on IBM/Lenovo ThinkPads
  * AMS on Apple iBooks and PowerBooks (G4)
  * HP3D on Hewlett-Packard laptops
- * APPLESMC on Apple MacBooks and PowerBooks (Intel) (UNTESTED!)
+ * APPLESMC on Apple MacBooks and MacBooks Pro (Intel) (UNTESTED!)
 
 1. Compilation
 --------------
