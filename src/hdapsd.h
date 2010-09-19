@@ -11,7 +11,7 @@
 #define HP3D_LED_FILE     "/sys/devices/virtual/leds/hp::hddprotect/brightness"
 #define HP3D_FREEFALL_FILE      "/dev/freefall"
 #define HP3D_FREEFALL_FD_FLAGS  (O_RDONLY)
-#define APPLESMC_POSITION_FILE	"/sys/devices/applesmc.768/position"
+#define APPLESMC_POSITION_FILE	"/sys/devices/platform/applesmc.768/position"
 #define SYSFS_BLOCK		"/sys/block"
 #define REMOVABLE_FMT		SYSFS_BLOCK"/%s/removable"
 #define UNLOAD_HEADS_FMT	SYSFS_BLOCK"/%s/device/unload_heads"
