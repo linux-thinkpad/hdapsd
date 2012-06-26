@@ -1,5 +1,6 @@
 [Unit]
 Description=%I shock protection daemon
+Documentation=man:hdapsd(8)
 
 [Service]
 SyslogIdentifier=%p(%I)
