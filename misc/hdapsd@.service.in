@@ -1,0 +1,8 @@
+[Unit]
+Description=%I shock protection daemon
+
+[Service]
+SyslogIdentifier=%p(%I)
+Nice=-5
+ExecStart=@prefix@/sbin/hdapsd -a -d %I
+Restart=on-abort

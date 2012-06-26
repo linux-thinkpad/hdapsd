@@ -1,2 +1,2 @@
-SUBDIRS=src doc
+SUBDIRS=src doc misc
 doc_DATA = README ChangeLog

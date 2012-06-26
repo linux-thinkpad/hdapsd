@@ -1,0 +1,4 @@
+# we start protection for first two fixed hard drives
+# in unlikely event of having more drives in you laptop, you can manually
+# symlink hdapsd@.service to /etc/systemd/system/hdapsd@sdc.service , hdapsd@sdd.service etc.
+SUBSYSTEM=="block", KERNEL=="sd[ab]", ATTRS{removable}=="0", TAG="systemd", ENV{SYSTEMD_WANTS}="hdapsd@%k.service"
