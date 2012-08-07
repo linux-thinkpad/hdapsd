@@ -1,10 +1,10 @@
 if HAVE_SYSTEMD
 udevdir = $(libdir)/udev/rules.d
-udev_DATA = 99-hdapsd.rules
+udev_DATA = hdapsd.rules
 systemdsystemunit_DATA = \
 	hdapsd@.service
 EXTRA_DIST = \
-	99-hdapsd.rules \
+	hdapsd.rules \
 	hdapsd@.service
 endif
 
