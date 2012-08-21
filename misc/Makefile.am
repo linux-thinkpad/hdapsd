@@ -1,6 +1,6 @@
 if HAVE_SYSTEMD
-udevdir = $(libdir)/udev/rules.d
-udev_DATA = hdapsd.rules
+udevrulesdir = $(udevdir)/rules.d
+udevrules_DATA = hdapsd.rules
 systemdsystemunit_DATA = \
 	hdapsd@.service
 endif
