@@ -40,6 +40,9 @@ AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$with_systemdsystemunitdir" -a "x$with_sy
 AC_ARG_WITH([udevdir],
 	AS_HELP_STRING([--with-udevdir=DIR], [Directory for udev]),
 	[], [with_udevdir=$($PKG_CONFIG --variable=udevdir udev)])
+if test -z "$with_udevdir"; then
+	with_udevdir="/lib/udev"
+fi
 AC_SUBST([udevdir], [$with_udevdir])
 
 AC_OUTPUT
