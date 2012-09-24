@@ -626,7 +626,7 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800"};
 	int mod_index;
 	char command[64];
 	position_interface = INTERFACE_NONE;
@@ -842,7 +842,7 @@ int main (int argc, char** argv)
 	if (!position_interface)
 		select_interface(1);
 
-	if (!position_interface) {
+	if (!position_interface && !hardware_logic) {
 		printlog(stdout, "Could not find a suitable interface");
 		return -1;
 	}
@@ -983,15 +983,17 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	ret = read_position_from_sysfs (&x, &y, &z);
-	if (background)
-		for (i = 0; ret && i < 100; ++i) {
-			usleep (100000);	/* 10 Hz */
-			ret = read_position_from_sysfs (&x, &y, &z);
+	if (!hardware_logic) {
+		ret = read_position_from_sysfs (&x, &y, &z);
+		if (background)
+			for (i = 0; ret && i < 100; ++i) {
+				usleep (100000);	/* 10 Hz */
+				ret = read_position_from_sysfs (&x, &y, &z);
+			}
+		if (ret) {
+			printlog(stderr, "Could not read position from sysfs.");
+			return 1;
 		}
-	if (ret) {
-		printlog(stderr, "Could not read position from sysfs.");
-		return 1;
 	}
 
 	/* adapt to the driver's sampling rate */
