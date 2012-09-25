@@ -55,6 +55,7 @@ static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
 static int hardware_logic = 0;
+static int force_software_logic = 0;
 static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
@@ -396,6 +397,8 @@ void usage ()
 	printf("   -H --hardware-logic               Use the hardware fall detection logic instead of\n");
 	printf("                                     the software one (-s/--sensitivity and -a/--adaptive\n");
 	printf("                                     have no effect in this mode).\n");
+	printf("   -S --software-logic               Use the software fall detection logic even if the\n");
+	printf("                                     hardware one is available.\n");
 	printf("   -L --no-leds                      Don't blink the LEDs.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
@@ -652,6 +655,15 @@ int select_interface (int modprobe)
 			position_interface = INTERFACE_AMS;
 		}
 	}
+	if (position_interface == INTERFACE_NONE && !force_software_logic) {
+		/* We still don't know which interface to use, try FREEFALL */
+		fd = open(FREEFALL_FILE, FREEFALL_FD_FLAGS);
+		if (fd >= 0) { /* yes, we are freefall */
+			close(fd);
+			position_interface = INTERFACE_FREEFALL;
+			hardware_logic = 1;
+		}
+	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try HP3D */
 		fd = open(HP3D_POSITION_FILE, O_RDONLY);
@@ -727,6 +739,7 @@ int main (int argc, char** argv)
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
 		{"hardware-logic", no_argument, NULL, 'H'},
+		{"software-logic", no_argument, NULL, 'S'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
 		{"no-leds", no_argument, NULL, 'L'},
@@ -746,7 +759,7 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHVhLlf", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -780,6 +793,10 @@ int main (int argc, char** argv)
 				break;
 		        case 'H':
 				hardware_logic = 1;
+				position_interface = INTERFACE_FREEFALL;
+				break;
+			case 'S':
+				force_software_logic = 1;
 				break;
 			case 'V':
 				version();
@@ -838,7 +855,8 @@ int main (int argc, char** argv)
 		usage(argv);
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
-	select_interface(0);
+	if (!position_interface)
+		select_interface(0);
 	if (!position_interface)
 		select_interface(1);
 
@@ -848,25 +866,18 @@ int main (int argc, char** argv)
 	}
 	else
 		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
-	if (position_interface == INTERFACE_HP3D && !poll_sysfs) {
-		printlog(stdout, "Forcing the hardware logic because of HP3D's sensors");
-		hardware_logic = 1;
-	}
 	if (hardware_logic) {
 		/* Open the file representing the hardware decision */
-	        freefall_fd = open (HP3D_FREEFALL_FILE, HP3D_FREEFALL_FD_FLAGS);
+	        freefall_fd = open (FREEFALL_FILE, FREEFALL_FD_FLAGS);
 		if (freefall_fd < 0) {
 				printlog(stdout,
-				        "WARNING: Failed openning the hardware logic file (%s). "
-					"It is probably not supported on your system. "
-				        "Falling back to software logic.\n"
-				        "Use '-y' to silence this warning.",
+				        "ERROR: Failed openning the hardware logic file (%s). "
+					"It is probably not supported on your system.",
 				        strerror(errno));
-				hardware_logic = 0;
-				poll_sysfs = 1;
+				return errno;
 		}
 		else {
-			printlog (stdout, "Uses hardware logic from " HP3D_FREEFALL_FILE);
+			printlog (stdout, "Uses hardware logic from " FREEFALL_FILE);
 		}
 	}
 	if (!poll_sysfs && !hardware_logic) {
@@ -919,10 +930,17 @@ int main (int argc, char** argv)
 				printlog(stdout, "Selected APPLESMC input device /dev/input/event%d", hdaps_input_nr);
 			}
 		}
-		if (position_interface != INTERFACE_HP3D) {
-			/* LEDs are not supported yet on other systems */
+	}
+	if (position_interface != INTERFACE_HP3D && position_interface != INTERFACE_FREEFALL) {
+		/* LEDs are not supported yet on other systems */
+		use_leds = 0;
+	}
+	if (use_leds) {
+		fd = open(HP3D_LED_FILE, O_WRONLY);
+		if (fd < 0)
 			use_leds = 0;
-		}
+		else
+			close(fd);
 	}
 
 	if (background) {
@@ -1053,9 +1071,9 @@ int main (int argc, char** argv)
 				 * (hardware_logic polls only when parked)
 				 */
 				usleep (1000000/sampling_rate);
-				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS|O_NONBLOCK);
+				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS|O_NONBLOCK);
 				ret = read(freefall_fd, &count, sizeof(count));
-				fcntl (freefall_fd, F_SETFL, HP3D_FREEFALL_FD_FLAGS);
+				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS);
 				/*
 				 * If the error is EAGAIN then it is not a real error but
 				 * a sign that the fall has ended

@@ -9,8 +9,8 @@
 #define AMS_POSITION_FILE	"/sys/devices/ams/current"
 #define HP3D_POSITION_FILE      "/sys/devices/platform/lis3lv02d/position"
 #define HP3D_LED_FILE     "/sys/devices/virtual/leds/hp::hddprotect/brightness"
-#define HP3D_FREEFALL_FILE      "/dev/freefall"
-#define HP3D_FREEFALL_FD_FLAGS  (O_RDONLY)
+#define FREEFALL_FILE      "/dev/freefall"
+#define FREEFALL_FD_FLAGS  (O_RDONLY)
 #define APPLESMC_POSITION_FILE	"/sys/devices/platform/applesmc.768/position"
 #define SYSFS_BLOCK		"/sys/block"
 #define REMOVABLE_FMT		SYSFS_BLOCK"/%s/removable"
@@ -56,11 +56,12 @@ enum interfaces {
 	INTERFACE_NONE,
 	INTERFACE_HDAPS,
 	INTERFACE_AMS,
+	INTERFACE_FREEFALL,
 	INTERFACE_HP3D,
 	INTERFACE_APPLESMC
 };
 
-char *interface_names[] = {"none", "HDAPS", "AMS", "HP3D", "APPLESMC"};
+char *interface_names[] = {"none", "HDAPS", "AMS", "FREEFALL", "HP3D", "APPLESMC"};
 
 enum kernel {
 	PROTECT,
