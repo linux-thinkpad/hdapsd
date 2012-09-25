@@ -806,6 +806,7 @@ int main (int argc, char** argv)
 				break;
 		        case 'L':
 			        use_leds = 0;
+			        break;
 			case 'f':
 				forceadd = 1;
 				break;
