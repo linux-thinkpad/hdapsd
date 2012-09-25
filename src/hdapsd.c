@@ -791,7 +791,7 @@ int main (int argc, char** argv)
 			case 'y':
 				poll_sysfs = 1;
 				break;
-		        case 'H':
+			case 'H':
 				hardware_logic = 1;
 				position_interface = INTERFACE_FREEFALL;
 				break;
@@ -804,9 +804,9 @@ int main (int argc, char** argv)
 			case 'l':
 				dosyslog = 1;
 				break;
-		        case 'L':
-			        use_leds = 0;
-			        break;
+			case 'L':
+				use_leds = 0;
+				break;
 			case 'f':
 				forceadd = 1;
 				break;
