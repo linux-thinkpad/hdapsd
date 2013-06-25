@@ -57,6 +57,7 @@ static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
+static int forcerotational = 0;
 
 char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
@@ -328,6 +329,8 @@ void usage ()
 	printf("   -f --force                        Force unloading heads, even if kernel thinks\n");
 	printf("                                     differently (on pre ATA7 drives).\n");
 	printf("                                     This only works when adding devices by hand (-d).\n");
+	printf("   -r --force-rotational             Autodetect drives as rotational, even if\n");
+	printf("                                     kernel thinks they are not.\n");
 	printf("   -s --sensitivity=<sensitivity>    How sensitive "PACKAGE_NAME" should be to movements.\n");
 	printf("                                     Defaults to 15, higher value means less\n");
 	printf("                                     sensitive.\n");
@@ -613,7 +616,9 @@ int autodetect_devices ()
 		while ((ep = readdir(dp))) {
 			char path[FILENAME_MAX];
 			char removable[FILENAME_MAX];
+			char rotational[FILENAME_MAX];
 			snprintf(removable, sizeof(removable), REMOVABLE_FMT, ep->d_name);
+			snprintf(rotational, sizeof(rotational), ROTATIONAL_FMT, ep->d_name);
 
 			if (kernel_interface == UNLOAD_HEADS)
 				snprintf(path, sizeof(path), UNLOAD_HEADS_FMT, ep->d_name);
@@ -621,9 +626,14 @@ int autodetect_devices ()
 				snprintf(path, sizeof(path), QUEUE_PROTECT_FMT, ep->d_name);
 				
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
-				printlog(stdout, "Adding autodetected device: %s", ep->d_name);
-				add_disk(ep->d_name);
-				num_devices++;
+				if (read_int(rotational) == 1 || forcerotational) {
+					printlog(stdout, "Adding autodetected device: %s", ep->d_name);
+					add_disk(ep->d_name);
+					num_devices++;
+				}
+				else {
+					printlog(stdout, "Not adding autodetected device \"%s\", it seems not to be a rotational drive.", ep->d_name);
+				}
 			}
 		}
 		(void)closedir(dp);
@@ -659,6 +669,7 @@ int main (int argc, char** argv)
 		{"help", no_argument, NULL, 'h'},
 		{"syslog", no_argument, NULL, 'l'},
 		{"force", no_argument, NULL, 'f'},
+		{"force-rotational", no_argument, NULL, 'r'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -673,7 +684,7 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlf", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlfr", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -713,6 +724,9 @@ int main (int argc, char** argv)
 				break;
 			case 'f':
 				forceadd = 1;
+				break;
+			case 'r':
+				forcerotational = 1;
 				break;
 			case 'h':
 			default:

@@ -8,6 +8,7 @@
 #define AMS_POSITION_FILE	"/sys/devices/ams/current"
 #define SYSFS_BLOCK		"/sys/block"
 #define REMOVABLE_FMT		SYSFS_BLOCK"/%s/removable"
+#define ROTATIONAL_FMT		SYSFS_BLOCK"/%s/queue/rotational"
 #define UNLOAD_HEADS_FMT	SYSFS_BLOCK"/%s/device/unload_heads"
 #define QUEUE_PROTECT_FMT	SYSFS_BLOCK"/%s/queue/protect"
 #define QUEUE_METHOD_FMT	SYSFS_BLOCK"/%s/queue/protect_method"
