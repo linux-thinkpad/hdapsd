@@ -4,11 +4,12 @@
  *
  *            Derived from pivot.c by Robert Love.
  *
- * Copyright (C) 2005-2009 Jon Escombe <lists@dresco.co.uk>
+ * Copyright (C) 2005-2010 Jon Escombe <lists@dresco.co.uk>
  *                         Robert Love <rml@novell.com>
  *                         Shem Multinymous <multinymous@gmail.com>
  *                         Elias Oltmanns <eo@nebensachen.de>
  *                         Evgeni Golov <sargentd@die-welt.net>
+ *                         Brice Arnould <brice.arnould+hdapsd@gmail.com>
  *
  * "Why does that kid keep dropping his laptop?"
  *
@@ -53,15 +54,19 @@ static int verbose = 0;
 static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
+static int hardware_logic = 0;
+static int force_software_logic = 0;
 static int sampling_rate = 0;
 static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
 static int forcerotational = 0;
+static int use_leds = 1;
 
 char pid_file[FILENAME_MAX] = "";
 int hdaps_input_fd = 0;
 int hdaps_input_nr = -1;
+int freefall_fd = -1;
 
 struct list *disklist = NULL;
 enum kernel kernel_interface = UNLOAD_HEADS;
@@ -83,7 +88,7 @@ void printlog (FILE *stream, const char *fmt, ...)
 	va_end(ap);
 
 	if (dosyslog)
-		syslog(LOG_INFO, msg);
+	        syslog(LOG_INFO, msg);
 	else {
 		now = time((time_t *)NULL);
 		fprintf(stream, "%.24s: %s\n", ctime(&now), msg);
@@ -109,7 +114,7 @@ static int slurp_file (const char* filename, char* buf)
 	if (fd < 0) {
 		printlog(stderr, "Could not open %s: %s.\nDo you have the hdaps module loaded?", filename, strerror(errno));
 		return fd;
-	}	
+	}
 
 	ret = read (fd, buf, BUF_LEN-1);
 	if (ret < 0) {
@@ -152,7 +157,33 @@ static int read_position_from_ams (int *x, int *y, int *z)
 }
 
 /*
- * read_position_from_sysfs() - read the position either from HDAPS or from AMS
+ * read_position_from_hp3d() - read the (x,y,z) position from HP3D via sysfs file
+ */
+static int read_position_from_hp3d (int *x, int *y, int *z)
+{
+	char buf[BUF_LEN];
+	int ret;
+	if ((ret = slurp_file(HP3D_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "(%d,%d,%d)\n", x, y, z) != 3);
+}
+
+/*
+ * read_position_from_applesmc() - read the (x,y,z) position from APPLESMC
+ * via sysfs file
+ */
+static int read_position_from_applesmc (int *x, int *y, int *z)
+{
+	char buf[BUF_LEN];
+	int ret;
+	if ((ret = slurp_file(APPLESMC_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "(%d,%d,%d)\n", x, y, z) != 3);
+}
+
+/*
+ * read_position_from_sysfs() - read the position either from HDAPS or
+ * from AMS or from HP3D
  * depending on the given interface.
  */
 static int read_position_from_sysfs (int *x, int *y, int *z)
@@ -161,6 +192,10 @@ static int read_position_from_sysfs (int *x, int *y, int *z)
 		return read_position_from_hdaps(x,y);
 	else if (position_interface == INTERFACE_AMS)
 		return read_position_from_ams(x,y,z);
+	else if (position_interface == INTERFACE_HP3D)
+		return read_position_from_hp3d(x,y,z);
+	else if (position_interface == INTERFACE_APPLESMC)
+		return read_position_from_applesmc(x,y,z);
 	return -1;
 }
 
@@ -177,6 +212,23 @@ static int read_int (const char* filename)
 	if (sscanf (buf, "%d\n", &ret) != 1)
 		return -EIO;
 	return ret;
+}
+
+/*
+ * write_int() - writes an integer to a file
+ */
+static int write_int (const char* filename, const int value)
+{
+	char buf[BUF_LEN];
+	int fd;
+	int size;
+	fd = open (filename, O_WRONLY);
+	if (fd < 0)
+	        return -1;
+	size = snprintf (buf, BUF_LEN, "%i\n", value);
+	if (write (fd, buf, size) < 0)
+	        return -1;
+	return close (fd);
 }
 
 /*
@@ -221,7 +273,7 @@ static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 						*x = ev.value;
 						break;
 					case ABS_Y:
-						*y = ev.value; 
+						*y = ev.value;
 						break;
 					case ABS_Z:
 						*z = ev.value;
@@ -261,7 +313,7 @@ static int write_protect (const char *path, int val)
 	if (fd < 0) {
 		printlog (stderr, "Could not open %s", path);
 		return fd;
-	}	
+	}
 
 	ret = write (fd, buf, strlen(buf));
 
@@ -289,7 +341,7 @@ double get_utime (void)
 	return tv.tv_sec + tv.tv_usec/1000000.0;
 }
 
-/* 
+/*
  * SIGUSR1_handler - Handler for SIGUSR1, sleeps for a few seconds. Useful when suspending laptop.
  */
 void SIGUSR1_handler (int sig)
@@ -317,7 +369,7 @@ void version ()
 }
 
 /*
- * usage() - display usage instructions and exit 
+ * usage() - display usage instructions and exit
  */
 void usage ()
 {
@@ -345,6 +397,12 @@ void usage ()
 	printf("   -t --dry-run                      Don't actually park the drive.\n");
 	printf("   -y --poll-sysfs                   Force use of sysfs interface to\n");
 	printf("                                     accelerometer.\n");
+	printf("   -H --hardware-logic               Use the hardware fall detection logic instead of\n");
+	printf("                                     the software one (-s/--sensitivity and -a/--adaptive\n");
+	printf("                                     have no effect in this mode).\n");
+	printf("   -S --software-logic               Use the software fall detection logic even if the\n");
+	printf("                                     hardware one is available.\n");
+	printf("   -L --no-leds                      Don't blink the LEDs.\n");
 	printf("   -l --syslog                       Log to syslog instead of stdout/stderr.\n");
 	printf("\n");
 	printf("   -V --version                      Display version information and exit.\n");
@@ -389,8 +447,8 @@ void check_thresh (double val_sqr, double thresh, int* above, int* near,
  * adaptive threshold. The adaptive threshold slowly decreases back to the
  * base threshold when no value approaches it.
  */
-int analyze (int x, int y, double unow, double base_threshold, 
-             int adaptive, int parked) 
+int analyze (int x, int y, double unow, double base_threshold,
+             int adaptive, int parked)
 {
 	static int x_last = 0, y_last = 0;
 	static double unow_last = 0, x_veloc_last = 0, y_veloc_last = 0;
@@ -418,7 +476,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 	if (adaptive && unow > last_thresh_change + THRESH_ADAPT_SEC) {
 		if (recently_near_thresh) {
 			if (last_km_activity > last_near_thresh &&
-			    last_km_activity > last_thresh_change) { 
+			    last_km_activity > last_thresh_change) {
 				/* Near threshold and k/m activity */
 				adaptive_threshold *= THRESH_INCREASE_FACTOR;
 				last_thresh_change = unow;
@@ -431,7 +489,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 			last_thresh_change = unow;
 		}
 	}
-	
+
 	/* compute deltas */
 	udelta = unow - unow_last;
 	x_delta = x - x_last;
@@ -460,7 +518,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 
 	/* Threshold test (uses Pythagoras's theorem) */
 	strcpy(reason, "   ");
-	
+
 	check_thresh(veloc_sqr, threshold*VELOC_ADJUST,
 	             &above, &near, reason+0, 'V');
 	check_thresh(accel_sqr, threshold*ACCEL_ADJUST,
@@ -525,7 +583,7 @@ void add_disk (char* disk)
 	else {
 		snprintf(protect_file, sizeof(protect_file), QUEUE_PROTECT_FMT, disk);
 	}
-	
+
 	if (disklist == NULL) {
 		disklist = (struct list *)malloc(sizeof(struct list));
 		if (disklist == NULL) {
@@ -574,9 +632,10 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800"};
 	int mod_index;
 	char command[64];
+	position_interface = INTERFACE_NONE;
 
 	if (modprobe) {
 		for (mod_index = 0; mod_index < sizeof(modules)/sizeof(modules[0]); mod_index++) {
@@ -585,20 +644,44 @@ int select_interface (int modprobe)
 		}
 	}
 
+	/* We don't know yet which interface to use, try HDAPS */
 	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
-	if (fd < 0) { /* opening hdaps file failed */
+	if (fd >= 0) { /* yes, we are hdaps */
+		close(fd);
+		position_interface = INTERFACE_HDAPS;
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try AMS */
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
-		if (fd < 0) { /* opening ams failed too */
-			position_interface = INTERFACE_NONE;
-		}
-		else {
+		if (fd >= 0) { /* yes, we are ams */
 			close(fd);
 			position_interface = INTERFACE_AMS;
 		}
 	}
-	else { /* yes, we are hdaps */
-		close(fd);
-		position_interface = INTERFACE_HDAPS;
+	if (position_interface == INTERFACE_NONE && !force_software_logic) {
+		/* We still don't know which interface to use, try FREEFALL */
+		fd = open(FREEFALL_FILE, FREEFALL_FD_FLAGS);
+		if (fd >= 0) { /* yes, we are freefall */
+			close(fd);
+			position_interface = INTERFACE_FREEFALL;
+			hardware_logic = 1;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try HP3D */
+		fd = open(HP3D_POSITION_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are hp3d */
+			close(fd);
+			position_interface = INTERFACE_HP3D;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try APPLESMC */
+		fd = open(APPLESMC_POSITION_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are applesmc */
+			close(fd);
+			position_interface = INTERFACE_APPLESMC;
+		}
 	}
 	return position_interface;
 }
@@ -624,7 +707,7 @@ int autodetect_devices ()
 				snprintf(path, sizeof(path), UNLOAD_HEADS_FMT, ep->d_name);
 			else
 				snprintf(path, sizeof(path), QUEUE_PROTECT_FMT, ep->d_name);
-				
+
 			if (access(path, F_OK) == 0 && read_int(removable) == 0 && read_int(path) >= 0) {
 				if (read_int(rotational) == 1 || forcerotational) {
 					printlog(stdout, "Adding autodetected device: %s", ep->d_name);
@@ -642,7 +725,7 @@ int autodetect_devices ()
 }
 
 /*
- * main() - loop forever, reading the hdaps values and 
+ * main() - loop forever, reading the hdaps values and
  *          parking/unparking as necessary
  */
 int main (int argc, char** argv)
@@ -665,8 +748,11 @@ int main (int argc, char** argv)
 		{"pidfile", optional_argument, NULL, 'p'},
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
+		{"hardware-logic", no_argument, NULL, 'H'},
+		{"software-logic", no_argument, NULL, 'S'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, 'h'},
+		{"no-leds", no_argument, NULL, 'L'},
 		{"syslog", no_argument, NULL, 'l'},
 		{"force", no_argument, NULL, 'f'},
 		{"force-rotational", no_argument, NULL, 'r'},
@@ -684,7 +770,8 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyVhlfr", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlfr", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -716,11 +803,21 @@ int main (int argc, char** argv)
 			case 'y':
 				poll_sysfs = 1;
 				break;
+			case 'H':
+				hardware_logic = 1;
+				position_interface = INTERFACE_FREEFALL;
+				break;
+			case 'S':
+				force_software_logic = 1;
+				break;
 			case 'V':
 				version();
 				break;
 			case 'l':
 				dosyslog = 1;
+				break;
+			case 'L':
+				use_leds = 0;
 				break;
 			case 'f':
 				forceadd = 1;
@@ -736,7 +833,7 @@ int main (int argc, char** argv)
 	}
 
 	printlog(stdout, "Starting "PACKAGE_NAME);
-	
+
 	if (disklist && forceadd) {
 		char protect_method[FILENAME_MAX] = "";
 		p = disklist;
@@ -774,18 +871,32 @@ int main (int argc, char** argv)
 		usage(argv);
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
-	select_interface(0);
+	if (!position_interface)
+		select_interface(0);
 	if (!position_interface)
 		select_interface(1);
 
-	if (!position_interface) {
+	if (!position_interface && !hardware_logic) {
 		printlog(stdout, "Could not find a suitable interface");
 		return -1;
 	}
 	else
 		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
-
-	if (!poll_sysfs) {
+	if (hardware_logic) {
+		/* Open the file representing the hardware decision */
+	        freefall_fd = open (FREEFALL_FILE, FREEFALL_FD_FLAGS);
+		if (freefall_fd < 0) {
+				printlog(stdout,
+				        "ERROR: Failed openning the hardware logic file (%s). "
+					"It is probably not supported on your system.",
+				        strerror(errno));
+				return errno;
+		}
+		else {
+			printlog (stdout, "Uses hardware logic from " FREEFALL_FILE);
+		}
+	}
+	if (!poll_sysfs && !hardware_logic) {
 		if (position_interface == INTERFACE_HDAPS) {
 			hdaps_input_nr = device_find_byphys("hdaps/input1");
 			hdaps_input_fd = device_open(hdaps_input_nr);
@@ -812,7 +923,40 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected AMS input device /dev/input/event%d", hdaps_input_nr);
 			}
+		} else if (position_interface == INTERFACE_HP3D) {
+			hdaps_input_nr = device_find_byname("ST LIS3LV02DL Accelerometer");
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd < 0) {
+				printlog(stdout,
+					"WARNING: Could not find HP3D input device");
+				poll_sysfs = 1;
+			}
+			else {
+				printlog(stdout, "Selected HP3D input device /dev/input/event%d", hdaps_input_nr);
+			}
+		} else if (position_interface == INTERFACE_APPLESMC) {
+			hdaps_input_nr = device_find_byname("applesmc");
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd < 0) {
+				printlog(stdout,
+					"WARNING: Could not find APPLESMC input device");
+				poll_sysfs = 1;
+			}
+			else {
+				printlog(stdout, "Selected APPLESMC input device /dev/input/event%d", hdaps_input_nr);
+			}
 		}
+	}
+	if (position_interface != INTERFACE_HP3D && position_interface != INTERFACE_FREEFALL) {
+		/* LEDs are not supported yet on other systems */
+		use_leds = 0;
+	}
+	if (use_leds) {
+		fd = open(HP3D_LED_FILE, O_WRONLY);
+		if (fd < 0)
+			use_leds = 0;
+		else
+			close(fd);
 	}
 
 	if (background) {
@@ -849,7 +993,7 @@ int main (int argc, char** argv)
 			p = p->next;
 		}
 		printf("threshold: %i\n", threshold);
-		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : "input-dev");
+		printf("read_method: %s\n", poll_sysfs ? "poll-sysfs" : (hardware_logic ? "hardware-logic" : "input-dev"));
 	}
 
 	/* check the protect attribute exists */
@@ -873,20 +1017,24 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	ret = read_position_from_sysfs (&x, &y, &z);
-	if (background)
-		for (i = 0; ret && i < 100; ++i) {
-			usleep (100000);	/* 10 Hz */
-			ret = read_position_from_sysfs (&x, &y, &z);
+	if (!hardware_logic) {
+		ret = read_position_from_sysfs (&x, &y, &z);
+		if (background)
+			for (i = 0; ret && i < 100; ++i) {
+				usleep (100000);	/* 10 Hz */
+				ret = read_position_from_sysfs (&x, &y, &z);
+			}
+		if (ret) {
+			printlog(stderr, "Could not read position from sysfs.");
+			return 1;
 		}
-	if (ret) {
-		printlog(stderr, "Could not read position from sysfs.");
-		return 1;
 	}
 
-    /* adapt to the driver's sampling rate */
+	/* adapt to the driver's sampling rate */
 	if (position_interface == INTERFACE_HDAPS)
-		sampling_rate = read_int(SAMPLING_RATE_FILE);
+		sampling_rate = read_int(HDAPS_SAMPLING_RATE_FILE);
+	else if (position_interface == INTERFACE_HP3D)
+		sampling_rate = read_int(HP3D_SAMPLING_RATE_FILE);
 	if (sampling_rate <= 0)
 		sampling_rate = DEFAULT_SAMPLING_RATE;
 	if (verbose)
@@ -897,31 +1045,72 @@ int main (int argc, char** argv)
 	signal(SIGTERM, SIGTERM_handler);
 
 	while (running) {
-		if (poll_sysfs) {
-			usleep (1000000/sampling_rate);
-			ret = read_position_from_sysfs (&x, &y, &z);
-			unow = get_utime(); /* microsec */
-		} else {
-			double oldunow = unow;
-			int oldx = x, oldy = y, oldz = z;
-			ret = read_position_from_inputdev (&x, &y, &z, &unow);
+		if (!hardware_logic) { /* The decision is made by the software */
+			/* Get statistics and decide what to do */
+			if (poll_sysfs) {
+				usleep (1000000/sampling_rate);
+				ret = read_position_from_sysfs (&x, &y, &z);
+				unow = get_utime(); /* microsec */
+			} else {
+				double oldunow = unow;
+				int oldx = x, oldy = y, oldz = z;
+				ret = read_position_from_inputdev (&x, &y, &z, &unow);
 
-			/* The input device issues events only when the position changed.
-			 * The analysis state needs to know how long the position remained
-			 * unchanged, so send analyze() a fake retroactive update before sending
-			 * the new one. */
-			if (!ret && oldunow && unow-oldunow > 1.5/sampling_rate)
-				analyze(oldx, oldy, unow-1.0/sampling_rate, threshold, adaptive, parked);
-				
+				/*
+				 * The input device issues events only when the position changed.
+				 * The analysis state needs to know how long the position remained
+				 * unchanged, so send analyze() a fake retroactive update before sending
+				 * the new one.
+				 */
+				if (!ret && oldunow && unow-oldunow > 1.5/sampling_rate)
+					analyze(oldx, oldy, unow-1.0/sampling_rate, threshold, adaptive, parked);
+
+			}
+
+			if (ret) {
+				if (verbose)
+					printf("readout error (%d)\n", ret);
+				continue;
+			}
+
+			park_now = analyze(x, y, unow, threshold, adaptive, parked);
 		}
-
-		if (ret) {
+		else /* if (hardware_logic) */ {
+			unsigned char count; /* Number of fall events */
+			if (!parked) {
+				/* Wait for the hardware to notify a fall */
+				ret = read(freefall_fd, &count, sizeof(count));
+			}
+			else {
+				/*
+				 * Poll to check if we no longer are falling
+				 * (hardware_logic polls only when parked)
+				 */
+				usleep (1000000/sampling_rate);
+				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS|O_NONBLOCK);
+				ret = read(freefall_fd, &count, sizeof(count));
+				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS);
+				/*
+				 * If the error is EAGAIN then it is not a real error but
+				 * a sign that the fall has ended
+				 */
+				if (ret != sizeof(count) && errno == EAGAIN) {
+					count = 0; /* set fall events count to 0 */
+					ret = sizeof(count); /* Validate count */
+				}
+			}
+			/* handle read errors */
+			if (ret != sizeof(count)) {
+				if (verbose)
+					printf("readout error (%d)\n", ret);
+				continue;
+			}
+			/* Display the read values in verbose mode */
 			if (verbose)
-				printf("readout error (%d)\n", ret);
-			continue;
+				printf ("HW=%u\n", (unsigned) count);
+			unow = get_utime(); /* microsec */
+			park_now = (count > 0);
 		}
-
-		park_now = analyze(x, y, unow, threshold, adaptive, parked);
 
 		if (park_now && !pause_now) {
 			if (!parked || unow>parked_utime+REFREEZE_SECONDS) {
@@ -932,15 +1121,19 @@ int main (int argc, char** argv)
 					      (FREEZE_SECONDS+FREEZE_EXTRA_SECONDS) * protect_factor);
 					p = p->next;
 				}
-				/* Write protect before any output (xterm, or 
-				 * whatever else is handling our stdout, may be 
+				/*
+				 * Write protect before any output (xterm, or
+				 * whatever else is handling our stdout, may be
 				 * swapped out).
-				*/
-				if (!parked)
-					printlog(stdout, "parking");
+				 */
+				if (!parked) {
+				        printlog(stdout, "parking");
+					if (use_leds)
+						write_int (HP3D_LED_FILE, 1);
+				}
 				parked = 1;
 				parked_utime = unow;
-			} 
+			}
 		} else {
 			if (parked &&
 			    (pause_now || unow>parked_utime+FREEZE_SECONDS)) {
@@ -953,6 +1146,8 @@ int main (int argc, char** argv)
 					               "and timer expired?)");
 					/* Freeze has expired */
 					write_protect(p->protect_file, 0); /* unprotect */
+					if (use_leds)
+						write_int (HP3D_LED_FILE, 0);
 					p = p->next;
 				}
 				parked = 0;

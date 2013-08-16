@@ -1,5 +1,12 @@
+hdapsd 2010xxxx:
+	Brice Arnould <brice.arnould@gmail.com>:
+	* Support for the HP3D sensor from Hewlett-Packard laptops.
+
+	Evgeni Golov <sargentd@die-welt.net>:
+        * Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
+
 hdapsd 20090401:
-	Evgeni Golov <sargentd@die-welt.net>
+	Evgeni Golov <sargentd@die-welt.net>:
 	* Support for the Apple Motion Sensor.
 	* Udev rules obsolete, we can find the device on our own now.
 	* Support autodetection of drives.
