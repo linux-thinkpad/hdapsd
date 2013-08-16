@@ -771,7 +771,6 @@ int main (int argc, char** argv)
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
 	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlfr", longopts, NULL)) != -1) {
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlf", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
