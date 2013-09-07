@@ -1,9 +1,14 @@
-hdapsd 2010xxxx:
+hdapsd 2013xxxx:
 	Brice Arnould <brice.arnould@gmail.com>:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
 
 	Evgeni Golov <sargentd@die-welt.net>:
         * Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
+	* Support for the generic FREEFALL sensor.
+
+	Tomasz Torcz <tomek@pipebreaker.pl> and
+        Thomas Weißschuh <thomas@t-8ch.de>:
+	* systemd support
 
 hdapsd 20090401:
 	Evgeni Golov <sargentd@die-welt.net>:
