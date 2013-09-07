@@ -8,6 +8,9 @@ AC_CONFIG_SRCDIR([src/hdapsd.c])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile misc/Makefile])
 
+# Check for pkg-config/pkg.m4.
+m4_pattern_forbid([^PKG_[A-Z_]+$], [pkg.m4 missing, please install pkg-config])
+
 # Checks for programs.
 AC_PROG_CC
 
