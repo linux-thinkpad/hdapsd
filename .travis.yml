@@ -1,0 +1,7 @@
+---
+language: c
+install:
+  - sudo apt-get install pkg-config
+script:
+  - ./autogen.sh
+  - make
