@@ -88,7 +88,7 @@ void printlog (FILE *stream, const char *fmt, ...)
 	va_end(ap);
 
 	if (dosyslog)
-	        syslog(LOG_INFO, msg);
+	        syslog(LOG_INFO, "%s", msg);
 	else {
 		now = time((time_t *)NULL);
 		fprintf(stream, "%.24s: %s\n", ctime(&now), msg);
