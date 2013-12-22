@@ -8,6 +8,7 @@ disk head parking if a fall or sliding of the laptop is detected.
 Currently, the following motion interfaces are supported:
  * HDAPS on IBM/Lenovo ThinkPads
  * AMS on Apple iBooks and PowerBooks (G4)
+ * FREEFALL on Hewlett-Packard and DELL laptops
  * HP3D on Hewlett-Packard laptops
  * APPLESMC on Apple MacBooks and MacBooks Pro (Intel) (UNTESTED!)
 
