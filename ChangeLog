@@ -10,6 +10,9 @@ hdapsd 2013xxxx:
         Thomas Weißschuh <thomas@t-8ch.de>:
 	* systemd support
 
+	Whoopie <whoopie79@gmx.net>:
+	* Support for the DELL freefall sensor (smo8800)
+
 hdapsd 20090401:
 	Evgeni Golov <sargentd@die-welt.net>:
 	* Support for the Apple Motion Sensor.
