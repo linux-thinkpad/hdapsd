@@ -3,11 +3,11 @@ hdapsd 2013xxxx:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
 
 	Evgeni Golov <sargentd@die-welt.net>:
-        * Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
+	* Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
 	* Support for the generic FREEFALL sensor.
 
 	Tomasz Torcz <tomek@pipebreaker.pl> and
-        Thomas Weißschuh <thomas@t-8ch.de>:
+	Thomas Weißschuh <thomas@t-8ch.de>:
 	* systemd support
 
 	Whoopie <whoopie79@gmx.net>:
@@ -19,7 +19,7 @@ hdapsd 20090401:
 	* Udev rules obsolete, we can find the device on our own now.
 	* Support autodetection of drives.
 	* Try to autoload the needed modules, when neither HDAPS nor AMS
-          is found at startup.
+	  is found at startup.
 	* Option to forcely enable UNLOAD on disks where the kernel thinks
 	  it's unsupported.
 
