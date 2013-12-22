@@ -27,12 +27,13 @@ Compatibility
 -------------
 Since kernel 2.6.28 you don't need to patch your kernel, as support for
 IDLE_IMMEDIATE is present in mainline.
- NOTE: The new interface only allows IDLE_IMMEDIATE for drives that
-       announce to be ATA-7 conform. But threre are also drives that
-       support ATA-6 only but do IDLE_IMMEDIATE fine. For those you
-       need to force the interface with:
-       echo -1 > /sys/block/$DISK/device/unload_heads
-   OR: Call hdapsd like this: hdapsd -f -d $DISK
+
+**NOTE**: The new interface only allows IDLE_IMMEDIATE for drives that
+announce to be ATA-7 conform. But threre are also drives that support ATA-6
+only but do IDLE_IMMEDIATE fine. For those you need to force the interface
+with: `echo -1 > /sys/block/$DISK/device/unload_heads`.
+Or you can call hdapsd like this: `hdapsd -f -d $DISK`, to achieve the same
+result.
 
 For kernels <2.6.28, please have a look at
 http://www.thinkwiki.org/wiki/HDAPS#Kernel_patch
