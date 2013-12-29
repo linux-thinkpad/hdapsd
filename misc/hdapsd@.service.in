@@ -1,5 +1,5 @@
 [Unit]
-Description=%I shock protection daemon
+Description=hdapsd hard drive active protection system daemon - %I
 Documentation=man:hdapsd(8)
 
 [Service]
