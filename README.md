@@ -39,8 +39,20 @@ Packages
 
 Usage
 -----
-hdapsd (it will try to autodetect everything itself)
-for more options, please read `man hdapsd`
+
+In most cases, just running `hdapsd` as root should be enough, as it will
+try to autodetect everything itself.
+
+If you want to adjust stuff, these are the most commonly used options:
+
+ * `--device` which device to protect, e.g. `--device=sda`. Defaults to
+   autodetection of all rotating devices.
+ * `--sensitivity` adjusts the sensitivity of the algorithmus. Defaults to 15.
+ * `--adaptive` enables adaptive mode, where `hdapsd` adjusts the sensitity
+   while the mouse and keyboard are used.
+ * `--background` sends `hdapsd` into the background as a daemon.
+
+For more options, please read `man hdapsd`.
 
 Compatibility
 -------------
