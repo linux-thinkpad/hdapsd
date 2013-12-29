@@ -2,7 +2,7 @@
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
-.B hdapsd \fR[\fI\-f\fR|\fI\-d <device>\fR|\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-H\fR|\fI\-S\fR|\fI\-L\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
+.B hdapsd \fR[\fI\-f\fR|\fI\-r\fR|\\fI\-d <device>\fR|\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-H\fR|\fI\-S\fR|\fI\-L\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
 .SH OPTIONS
 .TP
 \fB\-d\fR \fB\-\-device=\fR\fI<device>\fR
@@ -11,6 +11,9 @@ hdapsd \- park the drive in case of an emergency
 \fB\-f\fR \fB\-\-force\fR
 Force unloading heads, even if kernel thinks different (on pre ATA7 drives).
 This only works when adding devices by hand (\-d).
+.TP
+\fB\-r\fR \fB\-\-force\-rotational\fR
+Autodetect drives as rotational, even if kernel thinks they are not.
 .TP
 \fB\-s\fR \fB\-\-sensitivity=\fR\fI<sensitivity>\fR
 How sensitive hdapsd should be to movements.
