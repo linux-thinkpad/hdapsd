@@ -31,4 +31,4 @@ hdapsd.service: hdapsd.service.in
 endif
 
 EXTRA_DIST = \
-	hdapsd.rules
+	hdapsd.rules hdapsd@.service.in hdapsd.service.in
