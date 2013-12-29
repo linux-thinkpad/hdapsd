@@ -75,7 +75,7 @@ mainline hdaps module vs tp_smapi (ThinkPad only)
 The mainline hdaps module present in Linux kernels does not support all
 hdaps-enabled ThinkPads, thus it is recommended to use the one provided
 by tp_smapi.
-Additionally the tp_smapi version provides a input interface to the data,
+Additionally the tp_smapi version provides an input interface to the data,
 which stops `hdapsd` from polling the data itself all the time, saving your
 battery.
 
