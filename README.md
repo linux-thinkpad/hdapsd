@@ -1,4 +1,4 @@
-hdapsd - Hard Drive Active Protection System Daemon
+`hdapsd` - Hard Drive Active Protection System Daemon
 ===================================================
 
 This is a disk protection user-space daemon. It monitors the acceleration
@@ -63,12 +63,12 @@ IDLE_IMMEDIATE is present in mainline.
 announce to be ATA-7 conform. But threre are also drives that support ATA-6
 only but do IDLE_IMMEDIATE fine. For those you need to force the interface
 with: `echo -1 > /sys/block/$DISK/device/unload_heads`.
-Or you can call hdapsd like this: `hdapsd -f -d $DISK`, to achieve the same
+Or you can call `hdapsd` like this: `hdapsd -f -d $DISK`, to achieve the same
 result.
 
 For kernels <2.6.28, please have a look at
 http://www.thinkwiki.org/wiki/HDAPS#Kernel_patch
-and patch your kernel with the appropriate patch before using hdapsd.
+and patch your kernel with the appropriate patch before using `hdapsd`.
 
 mainline hdaps module vs tp_smapi (ThinkPad only)
 -------------------------------------------------
@@ -76,7 +76,7 @@ The mainline hdaps module present in Linux kernels does not support all
 hdaps-enabled ThinkPads, thus it is recommended to use the one provided
 by tp_smapi.
 Additionally the tp_smapi version provides a input interface to the data,
-which stops hdapsd from polling the data itself all the time, saving your
+which stops `hdapsd` from polling the data itself all the time, saving your
 battery.
 
 Travis CI build status
