@@ -3,6 +3,7 @@ udevrulesdir = $(udevdir)/rules.d
 udevrules_DATA = hdapsd.rules
 systemdsystemunit_DATA = \
 	hdapsd@.service
+noinst_DATA = hdapsd.service
 
 edit = sed \
 	-e 's|@sbindir[@]|$(sbindir)|g'
