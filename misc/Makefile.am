@@ -17,6 +17,16 @@ hdapsd@.service: Makefile
 
 hdapsd@.service: hdapsd@.service.in
 
+hdapsd.service: Makefile
+	rm -f $@ $@.tmp
+	srcdir=''; \
+	  test -f ./$@.in || srcdir=$(srcdir)/; \
+	  $(edit) $${srcdir}$@.in >$@.tmp
+
+	mv $@.tmp $@
+
+hdapsd.service: hdapsd.service.in
+
 endif
 
 EXTRA_DIST = \

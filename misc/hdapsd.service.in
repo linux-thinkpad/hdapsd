@@ -1,0 +1,12 @@
+[Unit]
+Description=hdapsd hard drive active protection system daemon
+Documentation=man:hdapsd(8)
+
+[Service]
+SyslogIdentifier=%p
+Nice=-5
+ExecStart=@sbindir@/hdapsd -a 
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

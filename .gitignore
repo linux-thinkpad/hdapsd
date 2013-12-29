@@ -19,3 +19,4 @@ stamp-h1
 *.tar.gz
 doc/hdapsd.8
 misc/hdapsd@.service
+misc/hdapsd.service
