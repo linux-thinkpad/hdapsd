@@ -19,6 +19,16 @@ Compilation
     make
     make install
 
+### Configure parameters
+
+The following parameters to `./configure` are probably interesting:
+
+ * `--with-systemdsystemunitdir` lets you specify the directory for
+   systemd unit files. It defaults to the output of
+   `pkg-config --variable=systemdsystemunitdir systemd`.
+ * `--with-udevdir` lets you specify the directory for udev rules files.
+   It defaults to the output of `pkg-config --variable=udevdir udev`.
+
 Packages
 --------
  * [Arch](https://www.archlinux.org/packages/hdapsd) and [AUR](https://aur.archlinux.org/packages/hdapsd-git/)
