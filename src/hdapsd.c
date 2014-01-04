@@ -50,6 +50,10 @@
 #include <dirent.h>
 #include <libconfig.h>
 
+#ifndef config_error_file
+#define config_error_file(x) cfg_file
+#endif
+
 
 static int verbose = 0;
 static int pause_now = 0;
