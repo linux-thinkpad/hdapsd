@@ -1030,7 +1030,7 @@ int main (int argc, char** argv)
 	}
 
 	/* adapt to the driver's sampling rate */
-	if (position_interface == INTERFACE_HDAPS)
+	if (position_interface == INTERFACE_HDAPS && access(HDAPS_SAMPLING_RATE_FILE, F_OK) == 0)
 		sampling_rate = read_int(HDAPS_SAMPLING_RATE_FILE);
 	else if (position_interface == INTERFACE_HP3D)
 		sampling_rate = read_int(HP3D_SAMPLING_RATE_FILE);
