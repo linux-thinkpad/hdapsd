@@ -45,6 +45,7 @@ try to autodetect everything itself.
 
 If you want to adjust stuff, these are the most commonly used options:
 
+ * `--cfgfile` which allows to load a configuration from a file.
  * `--device` which device to protect, e.g. `--device=sda`. Defaults to
    autodetection of all rotating devices.
  * `--sensitivity` adjusts the sensitivity of the algorithmus. Defaults to 15.

@@ -47,4 +47,6 @@ if test -z "$with_udevdir"; then
 fi
 AC_SUBST([udevdir], [$with_udevdir])
 
+PKG_CHECK_MODULES([LIBCONFIG], [libconfig])
+
 AC_OUTPUT

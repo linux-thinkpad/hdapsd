@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #define PID_FILE                "/var/run/hdapsd.pid"
+#define CONFIG_FILE             "/etc/hdapsd.conf"
 #define HDAPS_POSITION_FILE	"/sys/devices/platform/hdaps/position"
 #define MOUSE_ACTIVITY_FILE     "/sys/devices/platform/hdaps/keyboard_activity"
 #define KEYBD_ACTIVITY_FILE     "/sys/devices/platform/hdaps/mouse_activity"

@@ -48,6 +48,7 @@
 #include <linux/input.h>
 #include <syslog.h>
 #include <dirent.h>
+#include <libconfig.h>
 
 
 static int verbose = 0;
@@ -375,6 +376,7 @@ void usage ()
 {
 	printf("Usage: "PACKAGE_NAME" [OPTIONS]\n");
 	printf("\n");
+	printf("   -c --cfgfile=<cfgfile>            Load configuration from <cfgfile>.\n");
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
 	printf("                                     Can be given multiple times\n");
 	printf("                                     to protect multiple devices.\n");
@@ -737,6 +739,11 @@ int main (int argc, char** argv)
 	int fd, i, ret, threshold = 15, adaptive = 0,
 	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
+	config_t cfg;
+	config_setting_t *setting;
+	char cfg_file[FILENAME_MAX] = CONFIG_FILE;
+	int cfgfile = 0;
+	const char *tmpcstr;
 
 	struct option longopts[] =
 	{
@@ -745,6 +752,7 @@ int main (int argc, char** argv)
 		{"adaptive", no_argument, NULL, 'a'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"background", no_argument, NULL, 'b'},
+		{"cfgfile", required_argument, NULL, 'c'},
 		{"pidfile", optional_argument, NULL, 'p'},
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
@@ -770,7 +778,7 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
-	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlfr", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbac:p::tyHSVhLlfr", longopts, NULL)) != -1) {
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -786,6 +794,10 @@ int main (int argc, char** argv)
 				break;
 			case 'v':
 				verbose = 1;
+				break;
+			case 'c':
+				cfgfile = 1;
+				snprintf(cfg_file, sizeof(cfg_file), "%s", optarg);
 				break;
 			case 'p':
 				pidfile = 1;
@@ -832,6 +844,57 @@ int main (int argc, char** argv)
 	}
 
 	printlog(stdout, "Starting "PACKAGE_NAME);
+
+	config_init(&cfg);
+	if (access(cfg_file, F_OK) == 0) {
+		if (!config_read_file(&cfg, cfg_file)) {
+			printlog(stderr, "%s:%d - %s", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+			config_destroy(&cfg);
+			free_disk(disklist);
+			return 1;
+		}
+
+		if (disklist == NULL) {
+			setting = config_lookup(&cfg, "device");
+			if (setting != NULL) {
+				if (config_setting_is_array(setting)) {
+					for (i = 0; i<config_setting_length(setting); i++) {
+						add_disk((char *) config_setting_get_string_elem(setting, i));
+					}
+				} else if (config_setting_is_scalar(setting)) {
+					add_disk((char *) config_setting_get_string(setting));
+				}
+			}
+		}
+
+		if (threshold == 15) {
+			config_lookup_int(&cfg, "sensitivity", &threshold);
+		}
+
+		if (adaptive == 0) {
+			config_lookup_bool(&cfg, "adaptive", &adaptive);
+		}
+
+		if (background == 0) {
+			config_lookup_bool(&cfg, "background", &background);
+		}
+
+		if (pidfile == 0) {
+			if (config_lookup_string(&cfg, "pidfile", &tmpcstr)) {
+				pidfile = 1;
+				strncpy(pid_file, tmpcstr, strlen(tmpcstr));
+			}
+		}
+
+		if (dosyslog == 0) {
+			config_lookup_bool(&cfg, "syslog", &dosyslog);
+		}
+	} else if (cfgfile) {
+		printlog(stderr, "Could not open configuration file %s.", cfg_file);
+		config_destroy(&cfg);
+		free_disk(disklist);
+		return 1;
+	}
 
 	if (disklist && forceadd) {
 		char protect_method[FILENAME_MAX] = "";
@@ -1008,6 +1071,7 @@ int main (int argc, char** argv)
 		if (fd < 0) {
 			printlog (stderr, "Could not open %s\nDoes your kernel/drive support IDLE_IMMEDIATE with UNLOAD?", p->protect_file);
 			free_disk(disklist);
+			config_destroy(&cfg);
 			return 1;
 		}
 		close (fd);
@@ -1162,6 +1226,7 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
+	config_destroy(&cfg);
 	printlog(stdout, "Terminating "PACKAGE_NAME);
 	closelog();
 	if (pidfile)

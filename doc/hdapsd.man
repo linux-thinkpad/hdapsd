@@ -2,8 +2,11 @@
 .SH NAME
 hdapsd \- park the drive in case of an emergency
 .SH SYNOPSIS
-.B hdapsd \fR[\fI\-f\fR|\fI\-r\fR|\\fI\-d <device>\fR|\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-H\fR|\fI\-S\fR|\fI\-L\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
+.B hdapsd \fR[\fI\-f\fR|\fI\-r\fR|\fI\-c <cfgfile>\fR|\fI\-d <device>\fR|\fI\-s <sensitivity>\fR|\fI\-a\fR|\fI\-v\fR|\fI\-b\fR|\fI\-p\fR|\fI\-t\fR|\fI\-y\fR|\fI\-H\fR|\fI\-S\fR|\fI\-L\fR|\fI\-l\fR|\fI\-V\fR|\fI\-h\fR]
 .SH OPTIONS
+.TP
+\fB\-c\fR \fB\-\-cfgfile=\fR\fI<cfgfile>\fR
+Load configuration from <cfgfile>.
 .TP
 \fB\-d\fR \fB\-\-device=\fR\fI<device>\fR
 <device> is likely to be hda or sda. Can be given multiple times to protect multiple devices.
