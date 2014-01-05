@@ -47,6 +47,8 @@ if test -z "$with_udevdir"; then
 fi
 AC_SUBST([udevdir], [$with_udevdir])
 
-PKG_CHECK_MODULES([LIBCONFIG], [libconfig])
+PKG_CHECK_MODULES([LIBCONFIG], [libconfig],
+ [AC_DEFINE([HAVE_LIBCONFIG], [1], [Have libconfig])],
+ [AC_MSG_NOTICE([libconfig was not found on your system, config file support will be disabled.])])
 
 AC_OUTPUT

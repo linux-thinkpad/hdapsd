@@ -48,12 +48,14 @@
 #include <linux/input.h>
 #include <syslog.h>
 #include <dirent.h>
-#include <libconfig.h>
 
-#ifndef config_error_file
-#define config_error_file(x) cfg_file
+#ifdef HAVE_LIBCONFIG
+# include <libconfig.h>
+
+# ifndef config_error_file
+#  define config_error_file(x) cfg_file
+# endif
 #endif
-
 
 static int verbose = 0;
 static int pause_now = 0;
@@ -380,7 +382,9 @@ void usage ()
 {
 	printf("Usage: "PACKAGE_NAME" [OPTIONS]\n");
 	printf("\n");
+#ifdef HAVE_LIBCONFIG
 	printf("   -c --cfgfile=<cfgfile>            Load configuration from <cfgfile>.\n");
+#endif
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
 	printf("                                     Can be given multiple times\n");
 	printf("                                     to protect multiple devices.\n");
@@ -743,11 +747,13 @@ int main (int argc, char** argv)
 	int fd, i, ret, threshold = 15, adaptive = 0,
 	pidfile = 0, parked = 0, forceadd = 0;
 	double unow = 0, parked_utime = 0;
+#ifdef HAVE_LIBCONFIG
 	config_t cfg;
 	config_setting_t *setting;
 	char cfg_file[FILENAME_MAX] = CONFIG_FILE;
 	int cfgfile = 0;
 	const char *tmpcstr;
+#endif
 
 	struct option longopts[] =
 	{
@@ -756,7 +762,9 @@ int main (int argc, char** argv)
 		{"adaptive", no_argument, NULL, 'a'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"background", no_argument, NULL, 'b'},
+#ifdef HAVE_LIBCONFIG
 		{"cfgfile", required_argument, NULL, 'c'},
+#endif
 		{"pidfile", optional_argument, NULL, 'p'},
 		{"dry-run", no_argument, NULL, 't'},
 		{"poll-sysfs", no_argument, NULL, 'y'},
@@ -782,7 +790,11 @@ int main (int argc, char** argv)
 
 	openlog(PACKAGE_NAME, LOG_PID, LOG_DAEMON);
 
+#ifdef HAVE_LIBCONFIG
 	while ((c = getopt_long(argc, argv, "d:s:vbac:p::tyHSVhLlfr", longopts, NULL)) != -1) {
+#else
+	while ((c = getopt_long(argc, argv, "d:s:vba:p::tyHSVhLlfr", longopts, NULL)) != -1) {
+#endif
 		switch (c) {
 			case 'd':
 				add_disk(optarg);
@@ -799,10 +811,12 @@ int main (int argc, char** argv)
 			case 'v':
 				verbose = 1;
 				break;
+#ifdef HAVE_LIBCONFIG
 			case 'c':
 				cfgfile = 1;
 				snprintf(cfg_file, sizeof(cfg_file), "%s", optarg);
 				break;
+#endif
 			case 'p':
 				pidfile = 1;
 				if (optarg == NULL) {
@@ -849,6 +863,7 @@ int main (int argc, char** argv)
 
 	printlog(stdout, "Starting "PACKAGE_NAME);
 
+#ifdef HAVE_LIBCONFIG
 	config_init(&cfg);
 	if (access(cfg_file, F_OK) == 0) {
 		if (!config_read_file(&cfg, cfg_file)) {
@@ -899,6 +914,7 @@ int main (int argc, char** argv)
 		free_disk(disklist);
 		return 1;
 	}
+#endif
 
 	if (disklist && forceadd) {
 		char protect_method[FILENAME_MAX] = "";
@@ -1075,7 +1091,9 @@ int main (int argc, char** argv)
 		if (fd < 0) {
 			printlog (stderr, "Could not open %s\nDoes your kernel/drive support IDLE_IMMEDIATE with UNLOAD?", p->protect_file);
 			free_disk(disklist);
+#ifdef HAVE_LIBCONFIG
 			config_destroy(&cfg);
+#endif
 			return 1;
 		}
 		close (fd);
@@ -1230,7 +1248,9 @@ int main (int argc, char** argv)
 	}
 
 	free_disk(disklist);
+#ifdef HAVE_LIBCONFIG
 	config_destroy(&cfg);
+#endif
 	printlog(stdout, "Terminating "PACKAGE_NAME);
 	closelog();
 	if (pidfile)
