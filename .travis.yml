@@ -1,7 +1,11 @@
 ---
 language: c
 install:
-  - sudo apt-get install pkg-config libconfig-dev
+  - sudo apt-get install pkg-config
 script:
+  - ./autogen.sh
+  - make
+  - make clean
+  - sudo apt-get install libconfig-dev
   - ./autogen.sh
   - make
