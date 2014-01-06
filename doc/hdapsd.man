@@ -6,7 +6,7 @@ hdapsd \- park the drive in case of an emergency
 .SH OPTIONS
 .TP
 \fB\-c\fR \fB\-\-cfgfile=\fR\fI<cfgfile>\fR
-Load configuration from <cfgfile>.
+Load configuration from <cfgfile>. Only available if hdapsd was compiled with libconfig support.
 .TP
 \fB\-d\fR \fB\-\-device=\fR\fI<device>\fR
 <device> is likely to be hda or sda. Can be given multiple times to protect multiple devices.
