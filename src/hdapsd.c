@@ -128,7 +128,7 @@ static int slurp_file (const char* filename, char* buf)
 		printlog(stderr, "Could not read from %s: %s", filename, strerror(errno));
 	} else {
 		buf[ret] = 0; /* null-terminate so we can parse safely */
-	ret = 0;
+		ret = 0;
 	}
 
 	if (close (fd))
