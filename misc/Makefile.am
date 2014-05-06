@@ -30,5 +30,7 @@ hdapsd.service: hdapsd.service.in
 
 endif
 
+sysconf_DATA = hdapsd.conf
+
 EXTRA_DIST = \
-	hdapsd.rules hdapsd@.service.in hdapsd.service.in
+	hdapsd.conf hdapsd.rules hdapsd@.service.in hdapsd.service.in
