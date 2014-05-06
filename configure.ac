@@ -48,7 +48,9 @@ fi
 AC_SUBST([udevdir], [$with_udevdir])
 
 PKG_CHECK_MODULES([LIBCONFIG], [libconfig],
- [AC_DEFINE([HAVE_LIBCONFIG], [1], [Have libconfig])],
+ [AC_DEFINE([HAVE_LIBCONFIG], [1], [Have libconfig])
+  have_libconfig=yes],
  [AC_MSG_NOTICE([libconfig was not found on your system, config file support will be disabled.])])
+AM_CONDITIONAL(HAVE_LIBCONFIG, [test -n "$have_libconfig" -a "x$have_libconfig" = xyes ])
 
 AC_OUTPUT

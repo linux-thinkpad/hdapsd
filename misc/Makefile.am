@@ -30,7 +30,9 @@ hdapsd.service: hdapsd.service.in
 
 endif
 
+if HAVE_LIBCONFIG
 sysconf_DATA = hdapsd.conf
+endif
 
 EXTRA_DIST = \
 	hdapsd.conf hdapsd.rules hdapsd@.service.in hdapsd.service.in
