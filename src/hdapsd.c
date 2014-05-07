@@ -793,7 +793,7 @@ int main (int argc, char** argv)
 #ifdef HAVE_LIBCONFIG
 	while ((c = getopt_long(argc, argv, "d:s:vbac:p::tyHSVhLlfr", longopts, NULL)) != -1) {
 #else
-	while ((c = getopt_long(argc, argv, "d:s:vba:p::tyHSVhLlfr", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:s:vbap::tyHSVhLlfr", longopts, NULL)) != -1) {
 #endif
 		switch (c) {
 			case 'd':
