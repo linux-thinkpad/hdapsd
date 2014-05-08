@@ -1104,7 +1104,7 @@ int main (int argc, char** argv)
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
 	if (!hardware_logic) {
 		ret = read_position_from_sysfs (&x, &y, &z);
-		if (background)
+		if (background || (position_interface == INTERFACE_HDAPS && errno == EBUSY))
 			for (i = 0; ret && i < 100; ++i) {
 				usleep (100000);	/* 10 Hz */
 				ret = read_position_from_sysfs (&x, &y, &z);
