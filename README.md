@@ -55,6 +55,31 @@ If you want to adjust stuff, these are the most commonly used options:
 
 For more options, please read `man hdapsd`.
 
+systemd and udev integration
+----------------------------
+
+`hdapsd` comes with `systemd` and `udev` integration. This means when those two
+are found on your system, `misc/hdapsd@.service` and `misc/hdapsd.rules` are
+installed and used. `udev` will start one `hdapsd` instance for each
+rotational, non-removable disk it finds.
+
+If you want to disable this automation for a certain disk, you can mask
+the `systemd` unit by calling:
+
+    systemctl mask hdapsd@sdX
+
+If you want to disable this automation at all, you can create an empty
+`/etc/udev/rules.d/hdapsd.rules`, which will override the system-installed
+udev rule.
+
+If you want to customize the parameters `hdapsd` is using, you can edit
+`/etc/hdapsd.conf` (preferred) or by customizing `hdapsd@.service` in
+`/etc/systemd/system/`.
+
+As an alternative, you could also use `misc/hdapsd.service`, which you'd
+have to install yourself. This unit will just start `hdapsd` the same way
+good old `sysvinit` would do.
+
 Compatibility
 -------------
 Since kernel 2.6.28 you don't need to patch your kernel, as support for
