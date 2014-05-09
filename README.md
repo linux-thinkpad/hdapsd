@@ -70,7 +70,8 @@ the `systemd` unit by calling:
 
 If you want to disable this automation at all, you can create an empty
 `/etc/udev/rules.d/hdapsd.rules`, which will override the system-installed
-udev rule.
+udev rule. You can still enable `hdapsd` for certain devices by creating
+`hdapsd@sdX.service` symlinks in `/etc/systemd/system/multi-user.target.wants/`
 
 If you want to customize the parameters `hdapsd` is using, you can edit
 `/etc/hdapsd.conf` (preferred) or by customizing `hdapsd@.service` in
