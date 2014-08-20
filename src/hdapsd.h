@@ -13,6 +13,9 @@
 #define FREEFALL_FILE      "/dev/freefall"
 #define FREEFALL_FD_FLAGS  (O_RDONLY)
 #define APPLESMC_POSITION_FILE	"/sys/devices/platform/applesmc.768/position"
+#define TOSHIBA_MOVEMENT_FILE	"/sys/devices/platform/toshiba_haps/movement"
+#define TOSHIBA_LEVEL_FILE	"/sys/devices/platform/toshiba_haps/protection_level"
+#define TOSHIBA_POSITION_FILE	"/sys/devices/platform/toshiba_acpi/position"
 #define SYSFS_BLOCK		"/sys/block"
 #define REMOVABLE_FMT		SYSFS_BLOCK"/%s/removable"
 #define ROTATIONAL_FMT		SYSFS_BLOCK"/%s/queue/rotational"
@@ -60,10 +63,12 @@ enum interfaces {
 	INTERFACE_AMS,
 	INTERFACE_FREEFALL,
 	INTERFACE_HP3D,
-	INTERFACE_APPLESMC
+	INTERFACE_APPLESMC,
+	INTERFACE_TOSHIBA_HAPS,
+	INTERFACE_TOSHIBA_ACPI
 };
 
-char *interface_names[] = {"none", "HDAPS", "AMS", "FREEFALL", "HP3D", "APPLESMC"};
+char *interface_names[] = {"none", "HDAPS", "AMS", "FREEFALL", "HP3D", "APPLESMC", "TOSHIBA_HAPS", "TOSHIBA_ACPI"};
 
 enum kernel {
 	PROTECT,
