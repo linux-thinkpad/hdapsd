@@ -718,7 +718,7 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try TOSHIBA_ACPI */
-		fd = open(APPLESMC_POSITION_FILE, O_RDONLY);
+		fd = open(TOSHIBA_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are TOSHIBA_ACPI */
 			close(fd);
 			position_interface = INTERFACE_TOSHIBA_ACPI;
