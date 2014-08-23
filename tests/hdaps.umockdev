@@ -1,0 +1,15 @@
+P: /devices/platform/hdaps
+E: DRIVER=hdaps
+E: MODALIAS=platform:hdaps
+E: SUBSYSTEM=platform
+A: calibrate=(-485,-503)
+L: driver=../../../bus/platform/drivers/hdaps
+A: invert=5
+A: keyboard_activity=1
+A: modalias=platform:hdaps
+A: mouse_activity=1
+A: oversampling_ratio=4
+A: position=(-498,-439)
+A: running_avg_filter_order=2
+A: sampling_rate=50
+A: temp1=34

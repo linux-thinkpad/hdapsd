@@ -1,0 +1,8 @@
+P: /devices/platform/toshiba_haps
+E: DRIVER=toshiba_haps
+E: MODALIAS=platform:toshiba_haps
+E: SUBSYSTEM=platform
+L: driver=../../../bus/platform/drivers/toshiba_haps
+A: modalias=platform:toshiba_haps
+A: movement=0
+A: protection_level=1

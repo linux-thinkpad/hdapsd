@@ -1,0 +1,7 @@
+P: /devices/platform/toshiba_acpi
+E: DRIVER=toshiba_acpi
+E: MODALIAS=platform:toshiba_acpi
+E: SUBSYSTEM=platform
+L: driver=../../../bus/platform/drivers/toshiba_acpi
+A: modalias=platform:toshiba_acpi
+A: position=0 0 0

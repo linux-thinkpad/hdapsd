@@ -1,0 +1,59 @@
+P: /devices/pci0000:00/0000:00:1f.2/ata1/host0/target0:0:0/0:0:0:0/block/sda
+N: sda
+S: disk/by-id/ata-Samsung_SSD_840_PRO_Series
+S: disk/by-id/wwn-0x500253855032ae3f
+E: DEVLINKS=/dev/disk/by-id/ata-Samsung_SSD_840_PRO_Series /dev/disk/by-id/wwn-0x500253855032ae3f
+E: DEVNAME=/dev/sda
+E: DEVTYPE=disk
+E: SUBSYSTEM=block
+A: alignment_offset=0
+A: capability=50
+A: dev=8:0
+L: device=../../../0:0:0:0
+A: discard_alignment=0
+A: events=
+A: events_async=
+A: events_poll_msecs=-1
+A: ext_range=256
+A: inflight=       0        0
+A: queue/rotational=1
+A: range=16
+A: removable=0
+A: ro=0
+A: size=500118192
+A: stat=  121624     4885  4330596    44456   860568    91574 28640798   745620        0   293420   789388
+
+P: /devices/pci0000:00/0000:00:1f.2/ata1/host0/target0:0:0/0:0:0:0
+E: DEVTYPE=scsi_device
+E: DRIVER=sd
+E: MODALIAS=scsi:t-0x00
+E: SUBSYSTEM=scsi
+A: device_blocked=0
+A: device_busy=0
+L: driver=../../../../../../../bus/scsi/drivers/sd
+A: eh_timeout=10
+A: evt_capacity_change_reported=0
+A: evt_inquiry_change_reported=0
+A: evt_lun_change_reported=0
+A: evt_media_change=0
+A: evt_mode_parameter_change_reported=0
+A: evt_soft_threshold_reached=0
+L: generic=scsi_generic/sg0
+A: iocounterbits=32
+A: iodone_cnt=0xf7ed8
+A: ioerr_cnt=0xf3
+A: iorequest_cnt=0xf8b57
+A: modalias=scsi:t-0x00
+A: model=Samsung SSD 840
+A: queue_depth=31
+A: queue_ramp_up_period=120000
+A: queue_type=simple
+A: rev=5B0Q
+A: scsi_level=6
+A: state=running
+A: timeout=30
+A: type=0
+A: vendor=ATA
+H: vpd_pg80=00800014533141544E454144353430363635542020202020
+H: vpd_pg83=0083006C02000014533141544E45414435343036363554202020202002010044415441202020202053616D73756E6720535344203834302050524F205365726965732020202020202020202020202020533141544E45414435343036363554202020202001030008500253855032AE3F
+A: unload_heads=0

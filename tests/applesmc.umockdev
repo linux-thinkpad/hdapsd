@@ -1,0 +1,7 @@
+P: /devices/platform/applesmc.768
+E: DRIVER=applespmc
+E: MODALIAS=platform:applesmc.768
+E: SUBSYSTEM=platform
+L: driver=../../../bus/platform/drivers/applesmc
+A: modalias=platform:applesmc.768
+A: position=(0,0,0)
