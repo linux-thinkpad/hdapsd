@@ -60,10 +60,13 @@ enum interfaces {
 	INTERFACE_AMS,
 	INTERFACE_FREEFALL,
 	INTERFACE_HP3D,
-	INTERFACE_APPLESMC
+	INTERFACE_APPLESMC,
+	INTERFACE_INPUT
 };
 
-char *interface_names[] = {"none", "HDAPS", "AMS", "FREEFALL", "HP3D", "APPLESMC"};
+char *interface_names[] = {"none", "HDAPS", "AMS", "FREEFALL", "HP3D", "APPLESMC", "INPUT"};
+
+char *input_accel_names[] = {"Acer BMA150 accelerometer"};
 
 enum kernel {
 	PROTECT,

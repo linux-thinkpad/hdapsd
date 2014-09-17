@@ -642,8 +642,9 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800", "acer_wmi"};
 	int mod_index;
+	int input_index;
 	char command[64];
 	position_interface = INTERFACE_NONE;
 
@@ -691,6 +692,19 @@ int select_interface (int modprobe)
 		if (fd >= 0) { /* yes, we are applesmc */
 			close(fd);
 			position_interface = INTERFACE_APPLESMC;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try INPUT */
+		for (input_index = 0; input_index < sizeof(input_accel_names)/sizeof(input_accel_names[0]); input_index++) {
+			hdaps_input_nr = device_find_byname(input_accel_names[input_index]);
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd != -1) {
+				printlog(stdout, "Selected accelerometer input device /dev/input/event%d", hdaps_input_nr);
+				poll_sysfs = 0;
+				position_interface = INTERFACE_INPUT;
+				break;
+			}
 		}
 	}
 	return position_interface;
@@ -1027,6 +1041,11 @@ int main (int argc, char** argv)
 			else {
 				printlog(stdout, "Selected APPLESMC input device /dev/input/event%d", hdaps_input_nr);
 			}
+		} else if (position_interface == INTERFACE_INPUT) {
+			if (poll_sysfs) {
+				printlog(stderr, "ERROR: You cannot use the INPUT interface with poll-sysfs");
+				return -1;
+			}
 		}
 	}
 	if (position_interface != INTERFACE_HP3D && position_interface != INTERFACE_FREEFALL) {
@@ -1102,7 +1121,7 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	if (!hardware_logic) {
+	if (!hardware_logic && position_interface != INTERFACE_INPUT) {
 		ret = read_position_from_sysfs (&x, &y, &z);
 		if (background || (position_interface == INTERFACE_HDAPS && errno == EBUSY))
 			for (i = 0; ret && i < 100; ++i) {
