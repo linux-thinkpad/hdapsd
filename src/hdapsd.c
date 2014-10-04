@@ -696,8 +696,14 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try INPUT */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_INPUT");
 		for (input_index = 0; input_index < sizeof(input_accel_names)/sizeof(input_accel_names[0]); input_index++) {
+			if (verbose)
+				printlog(stderr, "Trying input for %s", input_accel_names[input_index]);
 			hdaps_input_nr = device_find_byname(input_accel_names[input_index]);
+			if (verbose)
+				printlog(stderr, "Got hdaps_input_nr=%i", hdaps_input_nr);
 			hdaps_input_fd = device_open(hdaps_input_nr);
 			if (hdaps_input_fd != -1) {
 				printlog(stdout, "Selected accelerometer input device /dev/input/event%d", hdaps_input_nr);
