@@ -663,13 +663,19 @@ int select_interface (int modprobe)
 	position_interface = INTERFACE_NONE;
 
 	if (modprobe) {
+		if (verbose)
+			printlog(stderr, "Trying to load the correct kernel module");
 		for (mod_index = 0; mod_index < sizeof(modules)/sizeof(modules[0]); mod_index++) {
+			if (verbose)
+				printlog(stderr, "Loading %s", modules[mod_index]);
 			snprintf(command, sizeof(command), "modprobe %s 1>/dev/null 2>/dev/null", modules[mod_index]);
 			system(command);
 		}
 	}
 
 	/* We don't know yet which interface to use, try HDAPS */
+	if (verbose)
+		printlog(stderr, "Trying INTERFACE_HDAPS");
 	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
 	if (fd >= 0) { /* yes, we are hdaps */
 		close(fd);
@@ -677,6 +683,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try AMS */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_AMS");
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are ams */
 			close(fd);
@@ -685,6 +693,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE && !force_software_logic) {
 		/* We still don't know which interface to use, try FREEFALL */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_FREEFALL");
 		fd = open(FREEFALL_FILE, FREEFALL_FD_FLAGS);
 		if (fd >= 0) { /* yes, we are freefall */
 			close(fd);
@@ -694,6 +704,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try HP3D */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_HP3D");
 		fd = open(HP3D_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are hp3d */
 			close(fd);
@@ -702,6 +714,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try APPLESMC */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_APPLESMC");
 		fd = open(APPLESMC_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are applesmc */
 			close(fd);
@@ -710,6 +724,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try TOSHIBA_HAPS */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_TOSHIBA_HAPS");
 		fd = open(TOSHIBA_MOVEMENT_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are TOSHIBA_HAPS */
 			close(fd);
@@ -719,6 +735,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try TOSHIBA_ACPI */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_TOSHIBA_ACPI");
 		fd = open(TOSHIBA_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are TOSHIBA_ACPI */
 			close(fd);
