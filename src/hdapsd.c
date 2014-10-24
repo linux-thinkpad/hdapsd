@@ -398,6 +398,7 @@ void usage ()
 	printf("\n");
 #ifdef HAVE_LIBCONFIG
 	printf("   -c --cfgfile=<cfgfile>            Load configuration from <cfgfile>.\n");
+	printf("                                     By default, configuration is read from "CONFIG_FILE"\n");
 #endif
 	printf("   -d --device=<device>              <device> is likely to be hda or sda.\n");
 	printf("                                     Can be given multiple times\n");
