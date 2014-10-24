@@ -189,6 +189,18 @@ static int read_position_from_applesmc (int *x, int *y, int *z)
 }
 
 /*
+ * read_position_from_toshiba_acpi() - read the (x,y,z) position from TOSHIBA_ACPI
+ * via sysfs file
+ */
+static int read_position_from_toshiba_acpi (int *x, int *y, int *z)
+{
+	char buf[BUF_LEN];
+	int ret;
+	if ((ret = slurp_file(TOSHIBA_POSITION_FILE, buf)))
+		return ret;
+	return (sscanf (buf, "%d %d %d\n", x, y, z) != 3);
+}
+/*
  * read_position_from_sysfs() - read the position either from HDAPS or
  * from AMS or from HP3D
  * depending on the given interface.
@@ -203,6 +215,8 @@ static int read_position_from_sysfs (int *x, int *y, int *z)
 		return read_position_from_hp3d(x,y,z);
 	else if (position_interface == INTERFACE_APPLESMC)
 		return read_position_from_applesmc(x,y,z);
+	else if (position_interface == INTERFACE_TOSHIBA_ACPI)
+		return read_position_from_toshiba_acpi(x,y,z);
 	return -1;
 }
 
@@ -642,19 +656,26 @@ int select_interface (int modprobe)
 {
 	int fd;
 
-	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800"};
+	char *modules[] = {"hdaps_ec", "hdaps", "ams", "hp_accel", "applesmc", "smo8800", "toshiba_haps", "toshiba_acpi", "acer_wmi"};
 	int mod_index;
+	int input_index;
 	char command[64];
 	position_interface = INTERFACE_NONE;
 
 	if (modprobe) {
+		if (verbose)
+			printlog(stderr, "Trying to load the correct kernel module");
 		for (mod_index = 0; mod_index < sizeof(modules)/sizeof(modules[0]); mod_index++) {
+			if (verbose)
+				printlog(stderr, "Loading %s", modules[mod_index]);
 			snprintf(command, sizeof(command), "modprobe %s 1>/dev/null 2>/dev/null", modules[mod_index]);
 			system(command);
 		}
 	}
 
 	/* We don't know yet which interface to use, try HDAPS */
+	if (verbose)
+		printlog(stderr, "Trying INTERFACE_HDAPS");
 	fd = open (HDAPS_POSITION_FILE, O_RDONLY);
 	if (fd >= 0) { /* yes, we are hdaps */
 		close(fd);
@@ -662,6 +683,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try AMS */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_AMS");
 		fd = open(AMS_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are ams */
 			close(fd);
@@ -670,6 +693,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE && !force_software_logic) {
 		/* We still don't know which interface to use, try FREEFALL */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_FREEFALL");
 		fd = open(FREEFALL_FILE, FREEFALL_FD_FLAGS);
 		if (fd >= 0) { /* yes, we are freefall */
 			close(fd);
@@ -679,6 +704,8 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try HP3D */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_HP3D");
 		fd = open(HP3D_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are hp3d */
 			close(fd);
@@ -687,10 +714,52 @@ int select_interface (int modprobe)
 	}
 	if (position_interface == INTERFACE_NONE) {
 		/* We still don't know which interface to use, try APPLESMC */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_APPLESMC");
 		fd = open(APPLESMC_POSITION_FILE, O_RDONLY);
 		if (fd >= 0) { /* yes, we are applesmc */
 			close(fd);
 			position_interface = INTERFACE_APPLESMC;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try TOSHIBA_HAPS */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_TOSHIBA_HAPS");
+		fd = open(TOSHIBA_MOVEMENT_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are TOSHIBA_HAPS */
+			close(fd);
+			position_interface = INTERFACE_TOSHIBA_HAPS;
+			hardware_logic = 1;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try TOSHIBA_ACPI */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_TOSHIBA_ACPI");
+		fd = open(TOSHIBA_POSITION_FILE, O_RDONLY);
+		if (fd >= 0) { /* yes, we are TOSHIBA_ACPI */
+			close(fd);
+			position_interface = INTERFACE_TOSHIBA_ACPI;
+		}
+	}
+	if (position_interface == INTERFACE_NONE) {
+		/* We still don't know which interface to use, try INPUT */
+		if (verbose)
+			printlog(stderr, "Trying INTERFACE_INPUT");
+		for (input_index = 0; input_index < sizeof(input_accel_names)/sizeof(input_accel_names[0]); input_index++) {
+			if (verbose)
+				printlog(stderr, "Trying input for %s", input_accel_names[input_index]);
+			hdaps_input_nr = device_find_byname(input_accel_names[input_index]);
+			if (verbose)
+				printlog(stderr, "Got hdaps_input_nr=%i", hdaps_input_nr);
+			hdaps_input_fd = device_open(hdaps_input_nr);
+			if (hdaps_input_fd != -1) {
+				printlog(stdout, "Selected accelerometer input device /dev/input/event%d", hdaps_input_nr);
+				poll_sysfs = 0;
+				position_interface = INTERFACE_INPUT;
+				break;
+			}
 		}
 	}
 	return position_interface;
@@ -834,7 +903,6 @@ int main (int argc, char** argv)
 				break;
 			case 'H':
 				hardware_logic = 1;
-				position_interface = INTERFACE_FREEFALL;
 				break;
 			case 'S':
 				force_software_logic = 1;
@@ -965,17 +1033,24 @@ int main (int argc, char** argv)
 	else
 		printlog(stdout, "Selected interface: %s", interface_names[position_interface]);
 	if (hardware_logic) {
-		/* Open the file representing the hardware decision */
-	        freefall_fd = open (FREEFALL_FILE, FREEFALL_FD_FLAGS);
-		if (freefall_fd < 0) {
-				printlog(stdout,
-				        "ERROR: Failed openning the hardware logic file (%s). "
-					"It is probably not supported on your system.",
-				        strerror(errno));
-				return errno;
-		}
-		else {
-			printlog (stdout, "Uses hardware logic from " FREEFALL_FILE);
+		if (position_interface == INTERFACE_FREEFALL) {
+			/* Open the file representing the hardware decision */
+		        freefall_fd = open (FREEFALL_FILE, FREEFALL_FD_FLAGS);
+			if (freefall_fd < 0) {
+					printlog(stdout,
+					        "ERROR: Failed openning the hardware logic file (%s). "
+						"It is probably not supported on your system.",
+					        strerror(errno));
+					return errno;
+			}
+			else {
+				printlog (stdout, "Uses hardware logic from " FREEFALL_FILE);
+			}
+		} else if (position_interface == INTERFACE_TOSHIBA_HAPS) {
+			printlog (stdout, "Uses hardware logic from " TOSHIBA_MOVEMENT_FILE);
+		} else {
+                        printlog(stderr, "You requested hardware logic, but neither the FREEFALL nor the TOSHIBA_HAPS interface was found.");
+                        return -1;
 		}
 	}
 	if (!poll_sysfs && !hardware_logic) {
@@ -1026,6 +1101,11 @@ int main (int argc, char** argv)
 			}
 			else {
 				printlog(stdout, "Selected APPLESMC input device /dev/input/event%d", hdaps_input_nr);
+			}
+		} else if (position_interface == INTERFACE_INPUT) {
+			if (poll_sysfs) {
+				printlog(stderr, "ERROR: You cannot use the INPUT interface with poll-sysfs");
+				return -1;
 			}
 		}
 	}
@@ -1102,7 +1182,7 @@ int main (int argc, char** argv)
 
 	/* see if we can read the sensor */
 	/* wait for it if it's not there (in case the attribute hasn't been created yet) */
-	if (!hardware_logic) {
+	if (!hardware_logic && position_interface != INTERFACE_INPUT) {
 		ret = read_position_from_sysfs (&x, &y, &z);
 		if (background || (position_interface == INTERFACE_HDAPS && errno == EBUSY))
 			for (i = 0; ret && i < 100; ++i) {
@@ -1162,27 +1242,32 @@ int main (int argc, char** argv)
 		}
 		else /* if (hardware_logic) */ {
 			unsigned char count; /* Number of fall events */
-			if (!parked) {
-				/* Wait for the hardware to notify a fall */
-				ret = read(freefall_fd, &count, sizeof(count));
-			}
-			else {
-				/*
-				 * Poll to check if we no longer are falling
-				 * (hardware_logic polls only when parked)
-				 */
-				usleep (1000000/sampling_rate);
-				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS|O_NONBLOCK);
-				ret = read(freefall_fd, &count, sizeof(count));
-				fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS);
-				/*
-				 * If the error is EAGAIN then it is not a real error but
-				 * a sign that the fall has ended
-				 */
-				if (ret != sizeof(count) && errno == EAGAIN) {
-					count = 0; /* set fall events count to 0 */
-					ret = sizeof(count); /* Validate count */
+			if (position_interface == INTERFACE_FREEFALL) {
+				if (!parked) {
+					/* Wait for the hardware to notify a fall */
+					ret = read(freefall_fd, &count, sizeof(count));
 				}
+				else {
+					/*
+					 * Poll to check if we no longer are falling
+					 * (hardware_logic polls only when parked)
+					 */
+					usleep (1000000/sampling_rate);
+					fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS|O_NONBLOCK);
+					ret = read(freefall_fd, &count, sizeof(count));
+					fcntl (freefall_fd, F_SETFL, FREEFALL_FD_FLAGS);
+					/*
+					 * If the error is EAGAIN then it is not a real error but
+					 * a sign that the fall has ended
+					 */
+					if (ret != sizeof(count) && errno == EAGAIN) {
+						count = 0; /* set fall events count to 0 */
+						ret = sizeof(count); /* Validate count */
+					}
+				}
+			} else if (position_interface == INTERFACE_TOSHIBA_HAPS) {
+				usleep (1000000/sampling_rate);
+				ret = slurp_file(TOSHIBA_MOVEMENT_FILE, &count);
 			}
 			/* handle read errors */
 			if (ret != sizeof(count)) {
