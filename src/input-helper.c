@@ -1,7 +1,7 @@
 /*
  * input-helper.c - find and open input devices
  *
- * Copyright © 2009 Evgeni Golov <sargentd@die-welt.net>
+ * Copyright © 2009 Evgeni Golov <evgeni@golov.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

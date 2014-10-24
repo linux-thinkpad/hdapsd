@@ -8,7 +8,7 @@
  *                         Robert Love <rml@novell.com>
  *                         Shem Multinymous <multinymous@gmail.com>
  *                         Elias Oltmanns <eo@nebensachen.de>
- *                         Evgeni Golov <sargentd@die-welt.net>
+ *                         Evgeni Golov <evgeni@golov.de>
  *                         Brice Arnould <brice.arnould+hdapsd@gmail.com>
  *
  * "Why does that kid keep dropping his laptop?"

@@ -2,7 +2,7 @@ hdapsd 2013xxxx:
 	Brice Arnould <brice.arnould@gmail.com>:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
 
-	Evgeni Golov <sargentd@die-welt.net>:
+	Evgeni Golov <evgeni@golov.de>:
 	* Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
 	* Support for the generic FREEFALL sensor.
 
@@ -14,7 +14,7 @@ hdapsd 2013xxxx:
 	* Support for the DELL freefall sensor (smo8800)
 
 hdapsd 20090401:
-	Evgeni Golov <sargentd@die-welt.net>:
+	Evgeni Golov <evgeni@golov.de>:
 	* Support for the Apple Motion Sensor.
 	* Udev rules obsolete, we can find the device on our own now.
 	* Support autodetection of drives.
@@ -24,7 +24,7 @@ hdapsd 20090401:
 	  it's unsupported.
 
 hdapsd 20090129:
-	Evgeni Golov <sargentd@die-welt.net>:
+	Evgeni Golov <evgeni@golov.de>:
 	* Support for multiple disks.
 	* Support for logging to syslog when running in background.
 	* Use autotools.
