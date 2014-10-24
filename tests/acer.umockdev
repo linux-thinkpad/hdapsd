@@ -1,0 +1,17 @@
+P: /devices/virtual/input/input11
+E: ABS=7
+E: EV=9
+E: ID_INPUT=1
+E: ID_INPUT_ACCELEROMETER=1
+E: MODALIAS=input:b0019v0000p0000e0000-e0,3,kra0,1,2,mlsfw
+E: NAME="Acer BMA150 accelerometer"
+E: PHYS="wmi/input1"
+E: PRODUCT=19/0/0/0
+E: PROP=0
+E: SUBSYSTEM=input
+E: TAGS=:seat:
+A: modalias=input:b0019v0000p0000e0000-e0,3,kra0,1,2,mlsfw
+A: name=Acer BMA150 accelerometer
+A: phys=wmi/input1
+A: properties=0
+A: uniq=
