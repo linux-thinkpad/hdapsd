@@ -11,6 +11,8 @@ Currently, the following motion interfaces are supported:
  * FREEFALL on Hewlett-Packard and DELL laptops
  * HP3D on Hewlett-Packard laptops
  * APPLESMC on Apple MacBooks and MacBooks Pro (Intel) (UNTESTED!)
+ * Toshiba HAPS and Toshiba ACPI on Toshiba laptops (UNTESTED!)
+ * Generic input/joystick on ACER laptops (UNTESTED!)
 
 Compilation
 -----------
