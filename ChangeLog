@@ -1,10 +1,13 @@
-hdapsd 2013xxxx:
+hdapsd 20141024:
 	Brice Arnould <brice.arnould@gmail.com>:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
 
 	Evgeni Golov <evgeni@golov.de>:
 	* Support for Apple MacBooks and MacBooks Pro with Intel CPUs.
 	* Support for the generic FREEFALL sensor.
+	* Support for Toshiba laptops (using both ACPI and HAPS).
+	* Support for the generic input/joystick sensor.
+	* Config file support using libconfig.
 
 	Tomasz Torcz <tomek@pipebreaker.pl> and
 	Thomas Weißschuh <thomas@t-8ch.de>:
