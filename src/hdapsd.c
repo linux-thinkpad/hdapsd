@@ -57,14 +57,14 @@
 # endif
 #endif
 
+static volatile int pause_now = 0;
+static volatile int running = 1;
 static int verbose = 0;
-static int pause_now = 0;
 static int dry_run = 0;
 static int poll_sysfs = 0;
 static int hardware_logic = 0;
 static int force_software_logic = 0;
 static int sampling_rate = 0;
-static int running = 1;
 static int background = 0;
 static int dosyslog = 0;
 static int forcerotational = 0;
@@ -367,8 +367,9 @@ double get_utime (void)
  */
 void SIGUSR1_handler (int sig)
 {
-	signal(SIGUSR1, SIGUSR1_handler);
 	pause_now = 1;
+	if (verbose)
+		printlog(stdout, "SIGUSR1 called, pause_now is %d", pause_now);
 }
 
 /*
@@ -376,8 +377,9 @@ void SIGUSR1_handler (int sig)
  */
 void SIGTERM_handler (int sig)
 {
-	signal(SIGTERM, SIGTERM_handler);
 	running = 0;
+	if (verbose)
+		printlog(stdout, "SIGTERM called, running is %d", running);
 }
 
 /*
@@ -1206,9 +1208,17 @@ int main (int argc, char** argv)
 	if (verbose)
 		printf("sampling_rate: %d\n", sampling_rate);
 
-	signal(SIGUSR1, SIGUSR1_handler);
+	struct sigaction sa;
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags = 0;
 
-	signal(SIGTERM, SIGTERM_handler);
+	/* Register the handler for SIGUSR1. */
+	sa.sa_handler = SIGUSR1_handler;
+	sigaction (SIGUSR1, &sa, NULL);
+
+	/* Register the handler for SIGTERM. */
+	sa.sa_handler = SIGTERM_handler;
+	sigaction (SIGTERM, &sa, NULL);
 
 	while (running) {
 		if (!hardware_logic) { /* The decision is made by the software */
