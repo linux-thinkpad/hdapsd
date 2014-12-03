@@ -1,3 +1,12 @@
+hdapsd 20141203:
+	Evgeni Golov <evgeni@golov.de>:
+	* Fix cleanup of generated .service files for systemd
+
+	Whoopie <whoopie79@gmx.net>:
+	* Use sigaction(2) instead of signal(2) for handling SIGUSR1
+	  and SIGTERM. This helps stoping hdapsd properly when using
+	  the DELL freefall sensor.
+
 hdapsd 20141024:
 	Brice Arnould <brice.arnould@gmail.com>:
 	* Support for the HP3D sensor from Hewlett-Packard laptops.
