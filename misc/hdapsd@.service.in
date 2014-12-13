@@ -5,5 +5,5 @@ Documentation=man:hdapsd(8)
 [Service]
 SyslogIdentifier=%p(%I)
 Nice=-5
-ExecStart=@sbindir@/hdapsd -d %I
+ExecStart=@sbindir@/hdapsd --syslog -d %I
 Restart=on-abort
