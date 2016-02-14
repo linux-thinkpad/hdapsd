@@ -1,4 +1,4 @@
 # we start protection for rotational disks.
 # in unlikely event of wanting to protect flash bases disks, you can manually
 # symlink hdapsd@.service to /etc/systemd/system/hdapsd@sdc.service , hdapsd@sdd.service etc.
-SUBSYSTEM=="block", KERNEL=="sd[a-z]", ATTRS{removable}=="0", ATTRS{queue/rotational}=="1", TAG="systemd", ENV{SYSTEMD_WANTS}="hdapsd@%k.service"
+SUBSYSTEM=="block", KERNEL=="sd[a-z]", ATTRS{removable}=="0", ATTRS{queue/rotational}=="1", TAG="systemd", ENV{SYSTEMD_WANTS}+="hdapsd@%k.service"
