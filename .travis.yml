@@ -6,6 +6,6 @@ script:
   - ./autogen.sh
   - make
   - make clean
-  - sudo apt-get install libconfig-dev
+  - sudo apt-get install libconfig-dev || sudo apt-get install libconfig8-dev
   - ./autogen.sh
   - make
