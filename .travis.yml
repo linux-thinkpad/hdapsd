@@ -1,12 +1,13 @@
 ---
 language: c
+before_install:
+  - sudo apt-get -qq update
 install:
-  - sudo apt-get install pkg-config
+  - sudo apt-get install -y pkg-config
 script:
   - ./autogen.sh
   - make
   - make clean
-  - sudo apt-get update
-  - sudo apt-get install libconfig-dev || sudo apt-get install libconfig8-dev
+  - sudo apt-get install -y libconfig-dev || sudo apt-get install -y libconfig8-dev
   - ./autogen.sh
   - make
