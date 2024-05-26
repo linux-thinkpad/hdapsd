@@ -108,7 +108,3 @@ by tp_smapi.
 Additionally the tp_smapi version provides an input interface to the data,
 which stops `hdapsd` from polling the data itself all the time, saving your
 battery.
-
-Travis CI build status
-----------------------
-[![Build Status](https://travis-ci.org/evgeni/hdapsd.png?branch=master)](https://travis-ci.org/evgeni/hdapsd)
