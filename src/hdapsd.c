@@ -1041,7 +1041,7 @@ int main (int argc, char** argv)
 		        freefall_fd = open (FREEFALL_FILE, FREEFALL_FD_FLAGS);
 			if (freefall_fd < 0) {
 					printlog(stdout,
-					        "ERROR: Failed openning the hardware logic file (%s). "
+					        "ERROR: Failed opening the hardware logic file (%s). "
 						"It is probably not supported on your system.",
 					        strerror(errno));
 					return errno;
