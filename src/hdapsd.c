@@ -1235,7 +1235,7 @@ int main (int argc, char** argv)
 				unow = get_utime(); /* microsec */
 			} else {
 				double oldunow = unow;
-				int oldx = x, oldy = y, oldz = z;
+				int oldx = x, oldy = y;
 				ret = read_position_from_inputdev (&x, &y, &z, &unow);
 
 				/*
