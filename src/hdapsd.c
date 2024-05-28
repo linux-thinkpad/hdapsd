@@ -544,7 +544,7 @@ int analyze (int x, int y, double unow, double base_threshold,
 		threshold *= PARKED_THRESH_FACTOR;
 
 	/* Threshold test (uses Pythagoras's theorem) */
-	strncpy(reason, "   ", 3);
+	strncpy(reason, "   ", 4);
 
 	check_thresh(veloc_sqr, threshold*VELOC_ADJUST,
 	             &above, &near, reason+0, 'V');
