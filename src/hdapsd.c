@@ -46,6 +46,7 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <linux/input.h>
+#include <linux/version.h>
 #include <syslog.h>
 #include <dirent.h>
 
@@ -55,6 +56,11 @@
 # ifndef config_error_file
 #  define config_error_file(x) cfg_file
 # endif
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,16,0)
+# define input_event_sec time.tv_sec
+# define input_event_usec time.tv_usec
 #endif
 
 static volatile int pause_now = 0;
@@ -310,7 +316,7 @@ static int read_position_from_inputdev (int *x, int *y, int *z, double *utime)
 				continue;
 		}
 		if (!*utime) /* first event's time is closest to reality */
-			*utime = ev.time.tv_sec + ev.time.tv_usec/1000000.0;
+			*utime = ev.input_event_sec + ev.input_event_usec/1000000.0;
 		if (done)
 			return 0;
 	}
