@@ -35,7 +35,6 @@ Packages
 --------
  * [Arch](https://www.archlinux.org/packages/hdapsd) and [AUR](https://aur.archlinux.org/packages/hdapsd-git/)
  * [Debian](http://packages.debian.org/hdapsd)
- * [Fedora](https://apps.fedoraproject.org/packages/hdapsd)
  * [Gentoo](https://packages.gentoo.org/package/app-laptop/hdapsd)
  * [Slackbuilds](http://slackbuilds.org/result/?search=hdapsd)
  * [Ubuntu](http://packages.ubuntu.com/hdapsd)
