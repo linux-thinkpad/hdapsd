@@ -21,6 +21,9 @@ jobs:
         config:
           - none
           - libconfig
+        cc:
+          - gcc
+          - clang
     steps:
       - uses: actions/checkout@v4
       - name: Install pkg-config
@@ -29,4 +32,8 @@ jobs:
         if: matrix.config == 'libconfig'
         run: sudo apt-get install -y libconfig-dev
       - run: ./autogen.sh
+        env:
+          CC: ${{ matrix.cc }}
       - run: make
+        env:
+          CC: ${{ matrix.cc }}
