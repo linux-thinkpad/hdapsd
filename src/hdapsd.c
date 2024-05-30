@@ -1139,7 +1139,10 @@ int main (int argc, char** argv)
 				return 1;
 			}
 		}
-		daemon(0,0);
+		if (daemon(0,0) != 0) {
+			printlog (stderr, "Failed to daemonize");
+			return 1;
+		}
 		if (pidfile) {
 			char buf[BUF_LEN];
 			snprintf (buf, sizeof(buf), "%d\n", getpid());
