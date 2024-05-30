@@ -1027,7 +1027,7 @@ int main (int argc, char** argv)
 	}
 
 	if (disklist == NULL)
-		usage(argv);
+		usage();
 
 	/* Let's see if we're on a ThinkPad or on an *Book */
 	if (!position_interface)
