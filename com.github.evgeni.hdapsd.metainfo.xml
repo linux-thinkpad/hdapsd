@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+  <id>com.github.evgeni.hdapsd</id>
+  <metadata_license>MIT</metadata_license>
+  <name>hdapsd</name>
+  <summary>HDAPS daemon for various laptops with motion sensors</summary>
+  <description>
+    <p>This is a disk protection user-space daemon. It monitors the
+    acceleration values through an interface and automatically
+    initiates disk head parking if a fall or sliding of the laptop is
+    detected.</p>
+    <p>Currently, the following interfaces are supported:</p>
+    <ul>
+      <li>IBM/Lenovo ThinkPad (HDAPS)</li>
+      <li>Apple iBook/PowerBook (AMS)</li>
+      <li>Apple MacBook/MacBook Pro (APPLESMC)</li>
+      <li>HP (HP3D)</li>
+      <li>Dell (FREEFALL)</li>
+      <li>Toshiba (ACPI and HAPS)</li>
+      <li>Acer (INPUT)</li>
+    </ul>
+    <p>On ThinkPads, it is recommended that you use this daemon with
+    the hdaps module provided by tp-smapi rather the one in the
+    kernel, as this will save you a bit of power and will work on a
+    wider range of ThinkPads.</p>
+  </description>
+  <url type="homepage">https://github.com/evgeni/hdapsd</url>
+  <provides>
+    <modalias>dmi:*:pn*:pvrThinkPad*:rvn*</modalias>
+  </provides>
+</component>
