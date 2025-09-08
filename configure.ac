@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([hdapsd],[20141203],[https://github.com/linux-thinkpad/hdapsd])
+AC_INIT([hdapsd],[20250908],[https://github.com/linux-thinkpad/hdapsd])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/hdapsd.c])
 AC_CONFIG_HEADERS([src/config.h])

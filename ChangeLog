@@ -1,3 +1,18 @@
+hdapsd 20250908:
+  Thomas Weißschuh:
+  * log to syslog under systemd
+  * do not overwrite existing activated systemd units
+
+  Petter Reinholdtsen:
+  * Added Appstream metadata XML with hardware mapping
+
+  Evgeni Golov:
+  * catch daemon() errors
+  * don't pass argv to usage, it doesn't take any params
+  * don't save oldz, we never read it back
+  * fix compilation on modern systems with TIME_BITS=64
+  * don't truncate reason when initializing
+
 hdapsd 20141203:
 	Evgeni Golov <evgeni@golov.de>:
 	* Fix cleanup of generated .service files for systemd
