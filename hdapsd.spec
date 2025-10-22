@@ -37,6 +37,7 @@ install -m 644 misc/%{name}.service %{buildroot}%{_unitdir}
 %{_unitdir}/%{name}.service
 %{_unitdir}/%{name}@.service
 %{_mandir}/man8/hdapsd.8.gz
+%{_metainfodir}/com.github.linux_thinkpad.hdapsd.metainfo.xml
 %config(noreplace) %{_sysconfdir}/%{name}.conf
 %doc AUTHORS
 %license COPYING
