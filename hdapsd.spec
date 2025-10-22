@@ -3,7 +3,6 @@ Version:	20250908
 Release:	1%{?dist}
 Summary:	Protects hard drives by parking head when fall is detected
 
-Group:		Applications/System
 License:	GPLv2+
 URL:		http://hdaps.sourceforge.net/
 Source0:	https://github.com/linux-thinkpad/hdapsd/releases/download/%{version}/%{name}-%{version}.tar.gz
@@ -21,11 +20,11 @@ parking if a fall or sliding of the laptop is detected.
 HDAPS is typically found in ThinkPad laptops and AMS in Apple laptops.
 
 %prep
-%setup -q
+%autosetup
 
 %build
 %configure
-make %{?_smp_mflags}
+%make_build
 
 
 %install
